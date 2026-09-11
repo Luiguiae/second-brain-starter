@@ -10,6 +10,7 @@ from app.errors.knowledge_errors import BenchmarkLoadError, get_benchmark
 from app.errors.validation import (
     InvalidEnumValueError,
     MissingFieldsError,
+    classify_validation_errors,
     validate_diagnose_request,
 )
 
@@ -18,5 +19,6 @@ __all__ = [
     "get_benchmark",
     "InvalidEnumValueError",
     "MissingFieldsError",
+    "classify_validation_errors",
     "validate_diagnose_request",
 ]

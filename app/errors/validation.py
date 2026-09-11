@@ -44,6 +44,35 @@ class InvalidEnumValueError(Exception):
         )
 
 
+def classify_validation_errors(
+    errors: list[dict[str, Any]],
+) -> MissingFieldsError | InvalidEnumValueError:
+    """Clasifica los errores crudos de un `pydantic.ValidationError`.
+
+    Se usa tanto desde `validate_diagnose_request` (abajo, para MCP y para
+    cualquier validación manual) como desde el exception handler de
+    `RequestValidationError` del canal REST (Fase 5, T23) — una sola
+    implementación de la clasificación, dos puntos de entrada, para que
+    ambos canales clasifiquen exactamente igual (Fase 7, T29).
+
+    `loc[-1]` en vez de `loc[0]`: FastAPI antepone `"body"` al `loc` de
+    los errores del body (`("body", "purpose")`), mientras que una
+    validación directa contra `DiagnoseRequest.model_validate` produce
+    `("purpose",)` — `loc[-1]` funciona igual en ambos casos.
+    """
+    missing = sorted({str(e["loc"][-1]) for e in errors if e["type"] == "missing"})
+    if missing:
+        return MissingFieldsError(missing_fields=missing)
+
+    first = errors[0]
+    field_name = str(first["loc"][-1]) if first["loc"] else "unknown"
+    return InvalidEnumValueError(
+        field=field_name,
+        value=first.get("input"),
+        valid_values=list(DIMENSION_VALUES.get(field_name, [])),
+    )
+
+
 def validate_diagnose_request(payload: dict[str, Any]) -> DiagnoseRequest:
     """Valida un payload crudo (p. ej. el JSON de un request HTTP o de una tool MCP).
 
@@ -56,16 +85,4 @@ def validate_diagnose_request(payload: dict[str, Any]) -> DiagnoseRequest:
     try:
         return DiagnoseRequest.model_validate(payload)
     except ValidationError as exc:
-        errors = exc.errors()
-
-        missing = sorted({str(e["loc"][0]) for e in errors if e["type"] == "missing"})
-        if missing:
-            raise MissingFieldsError(missing_fields=missing) from exc
-
-        first = errors[0]
-        field_name = str(first["loc"][0]) if first["loc"] else "unknown"
-        raise InvalidEnumValueError(
-            field=field_name,
-            value=first.get("input"),
-            valid_values=list(DIMENSION_VALUES.get(field_name, [])),
-        ) from exc
+        raise classify_validation_errors(exc.errors()) from exc
