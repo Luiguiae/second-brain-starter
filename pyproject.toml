@@ -1,0 +1,41 @@
+[project]
+name = "second-brain-starter"
+version = "0.1.0"
+description = "Diagnostica el perfil de conocimiento de una persona y recomienda la estructura de su Segundo Cerebro (PKM) + skills iniciales, vía MCP server y API REST/OpenAPI."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { text = "MIT" }
+authors = [{ name = "Luiguiavilae" }]
+
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "pydantic==2.13.5",
+    "pyyaml==6.0.3",
+    "jsonschema==4.26.0",
+    "mcp==2.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+    "ruff==0.16.7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
