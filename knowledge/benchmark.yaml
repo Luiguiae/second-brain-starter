@@ -1,0 +1,345 @@
+# knowledge/benchmark.yaml
+#
+# Base de conocimiento versionada del motor de reglas (docs/SPEC.md,
+# "Base de conocimiento"). Editable sin tocar código: valida contra el
+# schema de app/knowledge/schema.py (Benchmark) al cargarse
+# (app/knowledge/loader.py, Fase 1 T07).
+#
+# Fuente: docs/BENCHMARK.md (investigación web, sep 2026) + los
+# modificadores de capture_volume/technical_profile de docs/SPEC.md,
+# sección "Lógica de decisión".
+
+version: "1.0.0"
+
+# --- Fuentes citadas en docs/BENCHMARK.md, "Fuentes principales" ----------
+sources:
+  - id: forte_labs_basb
+    description: Forte Labs / Building a Second Brain (metodología PARA/BASB, paso "Capture")
+    url: https://fortelabs.com
+  - id: obsibrain_zettelkasten_guide
+    description: Obsibrain — guía de Zettelkasten (2026)
+    url: https://obsibrain.com
+  - id: taskade_lyt_blog
+    description: Taskade / LYT blog sobre Maps of Content (MOCs)
+    url: https://taskade.com
+  - id: dsebastien_johnny_decimal
+    description: dsebastien.net sobre Johnny Decimal
+    url: https://dsebastien.net
+  - id: tana_reviews
+    description: Reviews independientes de Tana (doolpa.com, toolchase.com)
+    url: https://doolpa.com
+  - id: mem2_reviews
+    description: Reviews de Mem 2.0 / Recall / Saner.ai (aiagentrank.io, supernormal.com)
+    url: https://aiagentrank.io
+  - id: atlas_workspace_comparison
+    description: Atlas Workspace, comparativa de 6 métodos de Segundo Cerebro
+    url: https://atlasworkspace.ai
+  - id: agent_native_oss_projects
+    description: >-
+      Proyectos open source de vaults agent-native (agent-vault, vault-kit,
+      llm-wiki-agent, agent-based-knowledge-management, okhlopkov.com)
+    url: https://okhlopkov.com
+
+# --- Tabla comparativa de docs/BENCHMARK.md --------------------------------
+systems:
+  - id: para_basb
+    name: PARA / BASB (CODE)
+    type: Acción
+    setup: Bajo
+    maintenance: "Revisión semanal (~15 min)"
+    connects_ideas: Débil
+    manages_action: Excelente
+    requires_ai_agent: false
+    best_for: Gestión de proyectos activos
+    source_refs: [forte_labs_basb]
+  - id: zettelkasten
+    name: Zettelkasten
+    type: Conocimiento
+    setup: Alto
+    maintenance: "Continuo (15-30 min/día)"
+    connects_ideas: Excelente
+    manages_action: Débil
+    requires_ai_agent: false
+    best_for: "Investigación, escritura de largo plazo"
+    source_refs: [obsibrain_zettelkasten_guide]
+  - id: lyt_moc
+    name: LYT / MOCs
+    type: Conocimiento
+    setup: Medio
+    maintenance: Continuo
+    connects_ideas: Excelente
+    manages_action: Moderada
+    requires_ai_agent: false
+    best_for: Punto medio entre estructura y flexibilidad
+    source_refs: [taskade_lyt_blog]
+  - id: evergreen_notes
+    name: Evergreen Notes
+    type: Conocimiento
+    setup: Alto
+    maintenance: Continuo
+    connects_ideas: Excelente
+    manages_action: Débil
+    requires_ai_agent: false
+    best_for: Construcción de expertise, escritura
+    source_refs: [atlas_workspace_comparison]
+  - id: johnny_decimal
+    name: Johnny Decimal
+    type: Administrativo
+    setup: Bajo
+    maintenance: Puntual
+    connects_ideas: Débil
+    manages_action: Moderada
+    requires_ai_agent: false
+    best_for: Archivo/recuperación rápida, no ideación
+    source_refs: [dsebastien_johnny_decimal]
+  - id: tana_supertags
+    name: Tana (supertags)
+    type: IA-nativa
+    setup: "Alto (curva empinada)"
+    maintenance: "Bajo (IA estructura)"
+    connects_ideas: "Buena (grafo tipado)"
+    manages_action: Buena
+    requires_ai_agent: true
+    best_for: Power users dispuestos a invertir tiempo
+    source_refs: [tana_reviews]
+  - id: mem2_recall_saner
+    name: Mem 2.0 / Recall / Saner.ai
+    type: IA-nativa
+    setup: Bajo
+    maintenance: "Muy bajo (auto-organización)"
+    connects_ideas: "Automática, poco control"
+    manages_action: Moderada
+    requires_ai_agent: true
+    best_for: Quiere cero fricción, acepta perder trazabilidad
+    source_refs: [mem2_reviews]
+  - id: agent_native
+    name: Agent-native (AGENTS.md/CLAUDE.md + frontmatter + tiers)
+    type: Agente
+    setup: Medio
+    maintenance: "Bajo-medio (el agente mantiene)"
+    connects_ideas: "Buena (vía frontmatter + grep)"
+    manages_action: Buena
+    requires_ai_agent: true
+    best_for: Knowledge workers técnicos que operan con Claude Code/Cursor
+    source_refs: [agent_native_oss_projects]
+
+# --- Los 3 arquetipos + 1 híbrido (docs/BENCHMARK.md) ----------------------
+archetypes:
+  - id: action_first
+    name: Acción-primero
+    description: >-
+      PARA puro. Sirve cuando el dolor principal es "no sé dónde archivar
+      cosas ni qué hacer con ellas", no "no conecto ideas".
+    folders: ["Projects/", "Areas/", "Resources/", "Archive/"]
+    frontmatter_fields: ["estado", "area", "fecha_revision"]
+  - id: knowledge_first
+    name: Conocimiento-primero
+    description: >-
+      Zettelkasten + LYT + Evergreen. Sirve cuando el dolor es producir
+      escritura/pensamiento original a partir de lo leído. Estructura:
+      Inbox (fleeting) → Notas permanentes (atómicas) → MOCs (hubs
+      temáticos) → Home note.
+    folders: ["Inbox/", "Notas-permanentes/", "MOCs/"]
+    frontmatter_fields: ["tipo_nota", "estado", "fecha_creacion", "conexiones"]
+  - id: agent_first
+    name: Agente-primero
+    description: >-
+      Pensado explícitamente para que un agente de código opere sobre el
+      vault, no solo para que un humano navegue. INDEX.md (humano) +
+      manifest.json (máquina) + AGENTS.md/CLAUDE.md en la raíz con las
+      reglas de operación.
+    folders: ["active/", "reference/", "archive/"]
+    frontmatter_fields: ["estado", "ttl"]
+  - id: hybrid
+    name: Híbrido
+    description: >-
+      PARA como capa de acción + Zettelkasten/LYT para conocimiento
+      profundo + capa agent-native encima (frontmatter + CLAUDE.md) para
+      que el agente opere sobre ambas capas. El caso más común en usuarios
+      técnicos; el campo `estado: activo/dormant/archivado` es el
+      mecanismo de "tiers" del arquetipo agent-native aplicado sobre la
+      estructura PARA + Zettelkasten, sin carpetas active/reference/archive
+      separadas.
+    folders: ["Projects/", "Areas/", "Resources/", "Archive/", "Inbox/", "Notas-permanentes/", "MOCs/"]
+    frontmatter_fields: ["estado", "area", "tipo_nota", "ttl"]
+
+# --- Las 5 dimensiones del diagnóstico (docs/SPEC.md, "Copy del diagnóstico") ---
+dimensions:
+  - id: purpose
+    question: "¿Cuál es el objetivo principal de tu Segundo Cerebro?"
+    options:
+      - value: execute_projects
+        label: "Ejecutar y dar seguimiento a proyectos activos"
+      - value: produce_knowledge
+        label: "Producir conocimiento propio: escribir, investigar"
+      - value: agent_memory
+        label: "Que un agente de IA opere sobre mis notas como memoria de trabajo"
+      - value: study
+        label: "Estudiar y retener contenido"
+  - id: maintenance_tolerance
+    question: "¿Cuánto tiempo quieres invertir manteniendo el sistema?"
+    options:
+      - value: low
+        label: "Poco, quiero organización automática"
+      - value: medium
+        label: "Algo, una revisión periódica está bien"
+      - value: high
+        label: "Mucho, disfruto estructurar y conectar notas a mano"
+  - id: agent_usage
+    question: "¿Usas o planeas usar agentes de código (Claude Code, Cursor) sobre tus notas?"
+    options:
+      - value: already_using
+        label: "Ya lo hago"
+      - value: want_to_start
+        label: "No todavía, pero quiero empezar"
+      - value: not_interested
+        label: "No me interesa por ahora"
+  - id: capture_volume
+    question: "¿Con qué frecuencia capturas información nueva?"
+    options:
+      - value: sporadic
+        label: "Esporádicamente"
+      - value: daily_moderate
+        label: "A diario, de una o dos fuentes"
+      - value: high_multi_source
+        label: "A diario, de muchas fuentes distintas"
+  - id: technical_profile
+    question: "¿Qué tan cómodo estás trabajando con archivos markdown y git?"
+    options:
+      - value: markdown_git_comfortable
+        label: "Muy cómodo, prefiero texto plano"
+      - value: prefers_visual_ui
+        label: "Prefiero una interfaz visual"
+
+# --- Lógica de decisión (docs/SPEC.md, sección homónima) -------------------
+decision_rules:
+  base_by_purpose:
+    - purpose: execute_projects
+      archetype: action_first
+      source_refs: [forte_labs_basb]
+    - purpose: produce_knowledge
+      archetype: knowledge_first
+      source_refs: [obsibrain_zettelkasten_guide, taskade_lyt_blog]
+    - purpose: agent_memory
+      archetype: agent_first
+      source_refs: [agent_native_oss_projects]
+    - purpose: study
+      archetype: knowledge_first
+      note: >-
+        Variante ligera de Conocimiento-primero. Cornell/Outline se
+        mencionan solo como nota textual de recomendación; implementarlos
+        como arquetipos propios está fuera de alcance en v1
+        (docs/SPEC.md, "Fuera de alcance").
+      source_refs: [obsibrain_zettelkasten_guide]
+
+  hybrid_modifier:
+    trigger_agent_usage: [already_using, want_to_start]
+    source_refs: [agent_native_oss_projects]
+
+  lyt_modifier:
+    trigger_maintenance_tolerance: low
+    applies_to_base_archetype: knowledge_first
+    note: >-
+      Baja tolerancia a mantenimiento manual + arquetipo base
+      Conocimiento-primero → se recomienda LYT (MOCs) en vez de
+      Zettelkasten puro (menor fricción).
+    source_refs: [taskade_lyt_blog]
+
+  capture_volume_modifiers:
+    - value: sporadic
+      add_folders: []
+      add_skill_id: null
+      source_refs: []
+    - value: daily_moderate
+      add_folders: ["Inbox/"]
+      add_skill_id: null
+      source_refs: [forte_labs_basb, obsibrain_zettelkasten_guide]
+    - value: high_multi_source
+      add_folders: ["Inbox/"]
+      add_skill_id: clasificador-de-fuentes
+      source_refs: [forte_labs_basb, obsibrain_zettelkasten_guide]
+
+  technical_profile_modifiers:
+    - value: markdown_git_comfortable
+      justification_template: >-
+        Perfil técnico cómodo con markdown/git: se recomienda implementar
+        la estructura en archivos planos (Markdown) versionados con git,
+        sin depender de una app propietaria.
+      default_system_ref: agent_native
+    - value: prefers_visual_ui
+      justification_template: >-
+        Perfil técnico que prefiere interfaz visual: se recomienda
+        implementar la misma estructura en una herramienta visual acorde
+        al arquetipo.
+      default_system_ref: tana_supertags
+      system_ref_by_archetype:
+        action_first: para_basb
+        knowledge_first: lyt_moc
+        agent_first: tana_supertags
+        hybrid: tana_supertags
+
+# --- Skills iniciales (docs/BENCHMARK.md, "Mapeo arquetipo → estructura → skills") ---
+skills_catalog:
+  - id: captura-rapida
+    name: captura-rapida
+    description: >-
+      Procesa el inbox de PARA: convierte capturas sueltas en proyectos,
+      áreas o recursos accionables (inbox processing).
+    archetypes: [action_first]
+    priority: 1
+  - id: revision-semanal
+    name: revision-semanal
+    description: "Checklist de revisión semanal PARA: qué proyectos están activos, qué archivar, qué mover de área."
+    archetypes: [action_first]
+    priority: 2
+  - id: plantilla-proyecto
+    name: plantilla-proyecto
+    description: "Plantilla de estructura para un proyecto nuevo dentro de Projects/, con criterio de éxito y fecha de cierre."
+    archetypes: [action_first]
+    priority: 3
+
+  - id: captura-atomica
+    name: captura-atomica
+    description: "Convierte una fleeting note del Inbox en una nota permanente atómica (una idea por nota)."
+    archetypes: [knowledge_first]
+    priority: 1
+  - id: vinculacion-bidireccional
+    name: vinculacion-bidireccional
+    description: "Sugiere y crea enlaces bidireccionales entre notas permanentes relacionadas."
+    archetypes: [knowledge_first]
+    priority: 2
+  - id: moc-builder
+    name: moc-builder
+    description: "Construye o actualiza un MOC (Map of Content) que agrupa notas permanentes por tema."
+    archetypes: [knowledge_first]
+    priority: 3
+  - id: revision-conexiones
+    name: revision-conexiones
+    description: "Revisión periódica de notas huérfanas (sin enlaces) para reforzar la red de conexiones."
+    archetypes: [knowledge_first]
+    priority: 4
+
+  - id: ingest-source
+    name: ingest-source
+    description: "Ingiere una fuente nueva (documento, transcripción, código) al vault agent-native con frontmatter y estado inicial."
+    archetypes: [agent_first]
+    priority: 1
+  - id: lint-vault
+    name: lint-vault
+    description: "Verifica consistencia de frontmatter (campos obligatorios, valores válidos de estado) en todo el vault."
+    archetypes: [agent_first]
+    priority: 2
+  - id: estado-tracker
+    name: estado-tracker
+    description: "Mueve notas de active/ a reference/ a archive/ según su TTL y estado declarado en el frontmatter."
+    archetypes: [agent_first]
+    priority: 3
+
+  - id: clasificador-de-fuentes
+    name: clasificador-de-fuentes
+    description: >-
+      Clasifica automáticamente las capturas entrantes por fuente/tipo
+      cuando el volumen de captura es alto y multi-fuente, antes de que
+      lleguen al Inbox (docs/SPEC.md, modificador de capture_volume).
+    archetypes: [action_first, knowledge_first, agent_first, hybrid]
+    priority: 0
