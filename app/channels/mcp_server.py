@@ -70,7 +70,21 @@ def diagnose_tool(
     # de Fase 4 (T17-T18) que este canal debe compartir con REST. Filtrando
     # los None acá, un campo ausente llega a validate_diagnose_request como
     # realmente ausente (MissingFieldsError), no como un error de schema del
-    # SDK.
+    # SDK. Casing distinto, string vacío ("") y whitespace SÍ llegan intactos
+    # (no son None) y se clasifican igual que en REST — ver
+    # test_invalid_enum_edge_cases_are_equivalent_across_channels en
+    # tests/parity/test_schema_validity.py.
+    #
+    # Límite conocido: el SDK liga estos 5 parámetros por firma de Python, así
+    # que un campo ausente en `arguments` y un `null` JSON explícito llegan
+    # los dos como `None` acá adentro — indistinguibles en este punto. Por
+    # eso un `purpose: null` explícito se clasifica como missing_fields en
+    # vez de invalid_enum_value (que es lo que REST devuelve para ese mismo
+    # input, porque a Pydantic sí le llega la clave presente con valor None).
+    # Se prioriza deliberadamente la clasificación correcta del caso común
+    # (campo realmente ausente) sobre la paridad exacta en este caso límite —
+    # ver test_explicit_null_is_a_known_divergence_of_the_mcp_workaround en
+    # el mismo archivo.
     raw_payload = {
         "purpose": purpose,
         "maintenance_tolerance": maintenance_tolerance,
