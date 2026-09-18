@@ -45,7 +45,7 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 # T22: metadata de OpenAPI. `servers` solo se declara si hay una URL pública
-# configurada (Railway, Fase 9) — GPT Actions requiere un `servers[0].url`
+# configurada (Koyeb, Fase 9) — GPT Actions requiere un `servers[0].url`
 # resoluble; en desarrollo local se omite y FastAPI no lo incluye.
 _public_base_url = os.environ.get("PUBLIC_BASE_URL")
 _servers = [{"url": _public_base_url}] if _public_base_url else None
@@ -53,7 +53,7 @@ _servers = [{"url": _public_base_url}] if _public_base_url else None
 # El canal MCP valida el header Host/Origin contra una allowlist (protección
 # DNS rebinding del SDK) — sin esto, TODO request a /mcp da 421, incluso en
 # desarrollo local. localhost/127.0.0.1 cubren desarrollo local; la URL
-# pública (Railway, Fase 9) se agrega cuando está configurada. Los tests
+# pública (Koyeb, Fase 9) se agrega cuando está configurada. Los tests
 # (Fase 6, T27) apuntan su TestClient a http://localhost explícitamente en
 # vez de agregar el host sintético de TestClient ("testserver") acá.
 _mcp_allowed_hosts = ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*"]

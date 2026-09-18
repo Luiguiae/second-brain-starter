@@ -52,7 +52,7 @@ Devuelve `archetype`, `justification` (citando `knowledge/benchmark.yaml`), `str
 
 El servidor MCP expone una única tool, `diagnose`, con los mismos 5 parámetros que el body de `/diagnose` (`purpose`, `maintenance_tolerance`, `agent_usage`, `capture_volume`, `technical_profile`) y devuelve exactamente la misma forma de respuesta — ambos canales comparten el mismo motor de reglas y el mismo JSON Schema (ver [AGENTS.md](AGENTS.md), invariante 2).
 
-Para conectarlo desde Claude Code (o cualquier cliente MCP que hable streamable-http), agregá el servidor apuntando a `http://127.0.0.1:8000/mcp` en local, o a `https://tu-deploy.up.railway.app/mcp` en producción.
+Para conectarlo desde Claude Code (o cualquier cliente MCP que hable streamable-http), agregá el servidor apuntando a `http://127.0.0.1:8000/mcp` en local, o a `https://tu-app.koyeb.app/mcp` en producción.
 
 ## Editar `knowledge/benchmark.yaml` sin tocar código
 
@@ -69,7 +69,19 @@ Si el archivo no valida, la app **no arranca en silencio con datos parciales** �
 
 ## Deploy
 
-Ver [Procfile](Procfile) / [railway.json](railway.json) para el deploy en Railway, y [`scripts/smoke_test.sh`](scripts/smoke_test.sh) para verificar un deploy ya arriba (`./scripts/smoke_test.sh https://tu-app.up.railway.app`).
+El deploy es en [Koyeb](https://www.koyeb.com) (opción gratuita, sin tarjeta, sin sleep por inactividad) a partir del [`Dockerfile`](Dockerfile) del repo:
+
+1. Probá la imagen localmente primero: `docker build -t second-brain-starter . && docker run -p 8000:8000 second-brain-starter` — debería responder igual que `uvicorn` local en `/health` y `/docs`.
+2. En el [dashboard de Koyeb](https://app.koyeb.com): **Create Web Service** → **GitHub** → elegí este repo → build method **Dockerfile** (Koyeb lo detecta automáticamente al encontrarlo en la raíz).
+3. Configurá la variable de entorno `PUBLIC_BASE_URL` con el dominio que Koyeb te asigna (`https://<tu-app>.koyeb.app`, o tu dominio custom) — ver [`.env.example`](.env.example) para qué la usa la app.
+4. Configurá el health check del servicio en `/health`.
+5. Alternativa: [Koyeb CLI](https://www.koyeb.com/docs/build-and-deploy/cli) (`koyeb deploy` / `koyeb service create`) en vez del flujo por dashboard.
+
+Una vez arriba, verificá el deploy con [`scripts/smoke_test.sh`](scripts/smoke_test.sh):
+
+```bash
+./scripts/smoke_test.sh https://tu-app.koyeb.app
+```
 
 ## Licencia
 
