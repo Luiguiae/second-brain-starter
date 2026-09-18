@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Diagnostica tu perfil de conocimiento con un cuestionario corto (5 dimensiones) y recomienda la estructura de tu Segundo Cerebro (PKM) + un set inicial de skills/plantillas — expuesto simultáneamente como **MCP server nativo** (`/mcp`) y **API REST/OpenAPI** (`/diagnose`), para que Claude Code, un GPT personalizado, u otro agente lo invoquen directamente.
+Ayuda a crear la base de un Segundo Cerebro (PKM) **desde cero**: a partir de 5 respuestas explícitas (cuestionario corto), recomienda una estructura + un set inicial de skills/plantillas — expuesto simultáneamente como **MCP server nativo** (`/mcp`, tool `create_second_brain_plan`) y **API REST/OpenAPI** (`POST /plan`), para que Claude Code, un GPT personalizado, u otro agente lo invoquen directamente. No es una herramienta de evaluación de sistemas existentes — está pensada para alguien que todavía no tiene un Segundo Cerebro armado.
 
 Motor de reglas **determinístico, sin LLM en el core** (ver [AGENTS.md](AGENTS.md)): mismo input, siempre la misma recomendación, trazable a [`knowledge/benchmark.yaml`](knowledge/benchmark.yaml).
 
@@ -22,7 +22,7 @@ uvicorn app.main:app --reload
 
 La app queda arriba en `http://127.0.0.1:8000`:
 - `GET /health` — healthcheck.
-- `POST /diagnose` — el endpoint REST.
+- `POST /plan` — el endpoint REST.
 - `GET /docs` — documentación interactiva (Swagger UI).
 - `GET /openapi.json` — el schema OpenAPI 3.x (compatible con Custom GPT Actions).
 - `POST /mcp` — el servidor MCP nativo (streamable HTTP).
@@ -37,7 +37,7 @@ ruff check .
 ## Ejemplo — REST
 
 ```bash
-curl -X POST http://127.0.0.1:8000/diagnose \
+curl -X POST http://127.0.0.1:8000/plan \
   -H "Content-Type: application/json" \
   -d '{
     "purpose": "execute_projects",
@@ -52,13 +52,15 @@ Devuelve `archetype`, `justification` (citando `knowledge/benchmark.yaml`), `str
 
 ## Ejemplo — MCP
 
-El servidor MCP expone una única tool, `diagnose`, con los mismos 5 parámetros que el body de `/diagnose` (`purpose`, `maintenance_tolerance`, `agent_usage`, `capture_volume`, `technical_profile`) y devuelve exactamente la misma forma de respuesta — ambos canales comparten el mismo motor de reglas y el mismo JSON Schema (ver [AGENTS.md](AGENTS.md), invariante 2).
+El servidor MCP expone una única tool, `create_second_brain_plan`, con los mismos 5 parámetros que el body de `/plan` (`purpose`, `maintenance_tolerance`, `agent_usage`, `capture_volume`, `technical_profile`) y devuelve exactamente la misma forma de respuesta — ambos canales comparten el mismo motor de reglas y el mismo JSON Schema (ver [AGENTS.md](AGENTS.md), invariante 2).
+
+La descripción de la tool instruye al agente llamador a preguntarle al usuario las respuestas que falten (nunca inferirlas ni leer archivos del usuario) y a encuadrar la conversación como "crear tu Segundo Cerebro", no como "diagnosticar lo que ya tenés" — ver docs/SPEC.md, "Contrato de interacción con el agente llamador".
 
 Para conectarlo desde Claude Code (o cualquier cliente MCP que hable streamable-http), agregá el servidor apuntando a `http://127.0.0.1:8000/mcp` en local, o a `https://second-brain-starter.onrender.com/mcp` en producción.
 
 ## Editar `knowledge/benchmark.yaml` sin tocar código
 
-Toda la base de conocimiento — metodologías (`systems`), arquetipos, las 5 dimensiones del diagnóstico, la tabla de reglas de decisión (`decision_rules`) y el catálogo de skills iniciales (`skills_catalog`) — vive en [`knowledge/benchmark.yaml`](knowledge/benchmark.yaml), versionado en el repo.
+Toda la base de conocimiento — metodologías (`systems`), arquetipos, las 5 dimensiones de las preguntas, la tabla de reglas de decisión (`decision_rules`) y el catálogo de skills iniciales (`skills_catalog`) — vive en [`knowledge/benchmark.yaml`](knowledge/benchmark.yaml), versionado en el repo.
 
 Para agregar o ajustar una recomendación:
 

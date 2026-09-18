@@ -1,5 +1,32 @@
 # Changelog
 
+## v2.0.0 — Renombrado breaking: diagnose → plan
+
+**Breaking change de la API pública.** Motivo (docs/SPEC.md, "Historial de renombres"): "diagnóstico" implica evaluar algo existente, y esta herramienta es para crear un Segundo Cerebro desde cero, no para auditar uno que ya existe. El encuadre equivocado podía llevar al agente llamador a explorar el sistema de archivos del usuario buscando "algo que diagnosticar" — exactamente lo que esta tool nunca hace (todo el input viaja explícito en la llamada). La lógica de decisión, el motor de reglas y `knowledge/benchmark.yaml` **no cambiaron de comportamiento** — solo de nombre.
+
+### Cambios
+
+- **REST**: `POST /diagnose` → `POST /plan`. `operationId` de OpenAPI: `diagnoseSecondBrain` → `createSecondBrainPlan`.
+- **MCP**: tool `diagnose` → `create_second_brain_plan`.
+- **Modelos**: `DiagnoseRequest`/`DiagnoseResponse` → `CreateSecondBrainPlanRequest`/`CreateSecondBrainPlanResponse` (`app/models/diagnose.py` → `app/models/plan.py`).
+- **Engine**: `app.engine.diagnose()` → `app.engine.create_plan()`.
+- **Validación**: `validate_diagnose_request()` → `validate_create_plan_request()`.
+- **Contrato de interacción con el agente llamador** (nuevo, docs/SPEC.md): la descripción del tool (MCP y OpenAPI) — el texto que lee el agente llamador, no un comentario interno — ahora instruye explícitamente:
+  1. Si faltan respuestas, preguntarlas en lenguaje natural usando el texto exacto de "Copy de las preguntas", nunca inferirlas ni asumir defaults.
+  2. Nunca leer archivos ni explorar el sistema de archivos del usuario para completarlas — todo el input viaja explícito en la llamada.
+  3. Encuadrar la conversación como "crear/armar" el Segundo Cerebro, nunca como "diagnosticar/evaluar" uno existente.
+
+  `TOOL_DESCRIPTION` vive en `app/channels/__init__.py`, compartido por ambos canales — no hay dos copias del texto que puedan divergir.
+
+### Verificado
+
+- Suite completa (407 tests) y `ruff check .` en verde tras el renombrado.
+- Probado en vivo contra un servidor local real: `POST /plan` responde, `POST /diagnose` da 404, y la tool MCP `create_second_brain_plan` lista con la descripción completa (incluidas las 5 preguntas).
+
+### No cambia
+
+- La lógica de decisión, `knowledge/benchmark.yaml`, los estados de error, y la paridad MCP/REST — mismo comportamiento, verificado por la misma suite de tests (renombrada, no reescrita).
+
 ## v1.0.1 — Deploy final en Render (patch, sin cambios de código)
 
 Patch release: solo se resuelve dónde y cómo se despliega la app. Ningún archivo de `app/`, `tests/`, ni la lógica del motor de reglas cambió respecto a v1.0.0 — mismo `Dockerfile` de T31 en los tres intentos de plataforma.

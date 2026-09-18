@@ -3,7 +3,7 @@
 #
 # Contra la URL pública de un deploy real (Render u otro), verifica:
 #   1. GET /health responde 200.
-#   2. POST /diagnose con un caso feliz devuelve 200 y un archetype válido.
+#   2. POST /plan con un caso feliz devuelve 200 y un archetype válido.
 #   3. POST /mcp responde al handshake `initialize` del protocolo MCP.
 #
 # Uso:
@@ -34,9 +34,9 @@ else
 fi
 
 echo
-echo "== 2/3: POST /diagnose (caso feliz) =="
-diagnose_status=$(curl -s -o /tmp/smoke_diagnose.json -w "%{http_code}" \
-  -X POST "$BASE_URL/diagnose" \
+echo "== 2/3: POST /plan (caso feliz) =="
+plan_status=$(curl -s -o /tmp/smoke_plan.json -w "%{http_code}" \
+  -X POST "$BASE_URL/plan" \
   -H "Content-Type: application/json" \
   -d '{
     "purpose": "execute_projects",
@@ -45,16 +45,16 @@ diagnose_status=$(curl -s -o /tmp/smoke_diagnose.json -w "%{http_code}" \
     "capture_volume": "daily_moderate",
     "technical_profile": "markdown_git_comfortable"
   }')
-if [[ "$diagnose_status" == "200" ]]; then
-  archetype=$(python3 -c "import json; print(json.load(open('/tmp/smoke_diagnose.json'))['archetype'])" 2>/dev/null || echo "?")
-  echo "OK ($diagnose_status): archetype=$archetype"
+if [[ "$plan_status" == "200" ]]; then
+  archetype=$(python3 -c "import json; print(json.load(open('/tmp/smoke_plan.json'))['archetype'])" 2>/dev/null || echo "?")
+  echo "OK ($plan_status): archetype=$archetype"
   if [[ "$archetype" != "hybrid" ]]; then
     echo "FALLÓ: esperaba archetype=hybrid para este input, llegó '$archetype'"
     fail=1
   fi
 else
-  echo "FALLÓ: esperaba 200, llegó $diagnose_status"
-  cat /tmp/smoke_diagnose.json
+  echo "FALLÓ: esperaba 200, llegó $plan_status"
+  cat /tmp/smoke_plan.json
   fail=1
 fi
 
@@ -82,7 +82,7 @@ else
   fail=1
 fi
 
-rm -f /tmp/smoke_health.json /tmp/smoke_diagnose.json /tmp/smoke_mcp.txt
+rm -f /tmp/smoke_health.json /tmp/smoke_plan.json /tmp/smoke_mcp.txt
 
 echo
 if [[ "$fail" == "0" ]]; then

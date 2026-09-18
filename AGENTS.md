@@ -25,7 +25,7 @@ Toda la lógica de decisión vive en `app/engine/` y es el **único** lugar dond
 Mismo input → mismo output, siempre. El engine no tiene estado entre requests, no usa aleatoriedad, no depende del orden de ejecución ni del reloj del sistema para decidir.
 
 - **Motivo:** criterio de aceptación explícito del spec ("DADO que el mismo input se envía dos veces, ENTONCES la recomendación es idéntica").
-- **Verificable en:** `app/engine/` es puro — funciones que reciben `DiagnoseRequest` + el `benchmark` cargado y devuelven `DiagnoseResponse`, sin I/O propio más allá de la carga (ya resuelta) de `knowledge/benchmark.yaml`. Implementado en Fase 3, testeado en T15 (test de determinismo) y T16 (cobertura combinatoria de las 216 combinaciones).
+- **Verificable en:** `app/engine/` es puro — funciones que reciben `CreateSecondBrainPlanRequest` + el `benchmark` cargado y devuelven `CreateSecondBrainPlanResponse`, sin I/O propio más allá de la carga (ya resuelta) de `knowledge/benchmark.yaml`. Implementado en Fase 3, testeado en T15 (test de determinismo) y T16 (cobertura combinatoria de las 216 combinaciones).
 - **Regla de revisión:** cualquier uso de `random`, `datetime.now()`, orden de iteración no determinístico (p. ej. iterar un `set` sin ordenar) o estado mutable compartido entre requests dentro de `app/engine/` se rechaza.
 
 ## 4. Sin fallback silencioso
