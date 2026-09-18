@@ -226,17 +226,19 @@
 
 ---
 
-## Fase 9 — Deploy en Railway
+## Fase 9 — Deploy en Koyeb
 
-### T31 — Configuración de arranque para Railway
-- **Descripción:** `Procfile` o `Dockerfile` (a decidir según convención de Railway para FastAPI) + declaración de variables de entorno necesarias (puerto, ruta a `knowledge/benchmark.yaml` si es configurable) + comando `uvicorn` de producción.
-- **Archivos:** `Procfile` o `Dockerfile`, `railway.json` (si aplica), `.env.example`.
-- **Criterio de done:** Deploy manual en un proyecto Railway de prueba levanta la app y responde en `/` o `/docs`.
+> Cambio de plataforma (decisión de Luigui): Koyeb en vez de Railway — opción gratuita, sin tarjeta, sin sleep por inactividad. Reemplaza `railway.json` (T31 ya ejecutado) por un `Dockerfile`: más portable que depender del auto-detect de buildpacks de Koyeb, y no ata el arranque a config específica de una plataforma. La configuración de red del canal MCP (`TransportSecuritySettings` en `app/main.py`) ya lee la URL pública de una variable de entorno genérica configurada a mano (`PUBLIC_BASE_URL`), no de algo auto-inyectado por Railway — no necesita cambios por este swap.
 
-### T32 — Smoke test post-deploy
-- **Descripción:** Script o checklist manual documentado que, contra la URL pública de Railway, hace un `GET` de salud, un `POST /diagnose` de caso feliz, y una conexión de prueba a `/mcp`.
-- **Archivos:** `scripts/smoke_test.sh` (o documentado en `docs/`).
-- **Criterio de done:** Los 3 checks pasan contra el deploy real.
+### T31 — Configuración de arranque para Koyeb (Dockerfile)
+- **Descripción:** Reemplazar `railway.json` por un `Dockerfile` (imagen Python 3.11, instala el proyecto vía `pyproject.toml`, expone el puerto, arranca `uvicorn app.main:app --host 0.0.0.0 --port $PORT`) — más portable que depender del auto-detect de buildpacks de Koyeb, y reutilizable en cualquier plataforma que hable Docker. Mantiene `PUBLIC_BASE_URL` (`.env.example`) como la única variable de entorno relevante para `servers` de OpenAPI y la allowlist de `TransportSecuritySettings` del canal MCP — configurada a mano en el dashboard de Koyeb, nunca asumida como auto-inyectada por la plataforma. Documentar en `README.md` el flujo de deploy: Koyeb dashboard → *Create Web Service* → conectar el repo de GitHub → seleccionar build por `Dockerfile` (alternativa: Koyeb CLI) → configurar `PUBLIC_BASE_URL` → health check en `/health`.
+- **Archivos:** `Dockerfile` (nuevo), `railway.json` (eliminado), `.env.example` (revisar que siga siendo genérico), `README.md` (sección de deploy).
+- **Criterio de done:** `docker build` + `docker run` local levanta la app y responde en `/health` y `/docs` con el mismo comando que usaría Koyeb; deploy manual en un servicio Koyeb de prueba levanta la app y responde en `/` o `/docs`; `app/main.py` no referencia ninguna variable de entorno auto-inyectada específica de una plataforma (Railway, Koyeb o cualquier otra) — solo `PUBLIC_BASE_URL`, configurada a mano.
+
+### T32 — Smoke test post-deploy (contra Koyeb)
+- **Descripción:** Mismo smoke test de siempre — sin cambios de contenido, solo de destino: `GET /health`, `POST /diagnose` con un caso feliz, y una conexión de prueba (`initialize`) a `/mcp`. Se ejecuta contra la URL pública que asigna Koyeb (`https://<app>.koyeb.app` o el dominio custom configurado), no contra Railway.
+- **Archivos:** `scripts/smoke_test.sh` (sin cambios de lógica; revisar que los ejemplos de uso en sus comentarios y en `README.md` citen una URL de Koyeb, no de Railway).
+- **Criterio de done:** Los 3 checks pasan contra el deploy real en Koyeb.
 
 ---
 
