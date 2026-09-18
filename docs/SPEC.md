@@ -21,6 +21,7 @@ La tool (MCP y REST/OpenAPI) requiere las 5 dimensiones del Esquema de datos. La
 - Si falta alguna de las 5 respuestas, preguntarle al usuario cada una en lenguaje natural, usando el texto de la sección "Copy de las preguntas", una a la vez si hace falta — nunca asumir valores por defecto ni inferirlos.
 - Nunca leer archivos, explorar el sistema de archivos del usuario, ni asumir que existe un Segundo Cerebro previo para completar respuestas faltantes. Esta tool no lee nada del usuario — todo el input viaja explícito en la llamada.
 - Encuadrar la conversación como "vamos a crear/armar tu Segundo Cerebro", nunca como "voy a diagnosticar/evaluar lo que ya tenés".
+- Al crear los archivos reales de la estructura (paso separado y explícito, después de mostrar el plan — ver Casos de uso), usar el texto de `structure.folder_purposes` para escribir el README.md de cada carpeta en lenguaje humano (qué va ahí y para qué sirve), y para explicarle a la persona, en el resumen de lo que hizo, el propósito de cada carpeta — no solo listarlas por nombre ni limitarse a reglas para el agente (frontmatter, convenciones).
 
 Límite honesto: esto depende de que el agente llamador (Claude Code, GPT, u otro cliente MCP) respete la instrucción de la descripción del tool. El código no puede forzar a un agente externo a preguntar antes de llamar — es el máximo que el patrón de tool-calling permite.
 
@@ -54,6 +55,7 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - DADO un cliente MCP (Claude Code) y un cliente REST (GPT Action), ENTONCES ambos reciben una respuesta que valida contra el mismo JSON Schema de salida (ver sección Esquema de datos).
 - DADO un input incompleto o con valores fuera de las opciones válidas, ENTONCES el sistema responde con un error estructurado (ver Estados de error), nunca con una recomendación parcial o inventada.
 - DADO que se inspecciona la descripción del tool (MCP y OpenAPI), ENTONCES contiene explícitamente las instrucciones del "Contrato de interacción con el agente llamador" de arriba — verificable leyendo el texto de la descripción, no el comportamiento en runtime (que no es controlable al 100% desde este código).
+- DADO cualquier arquetipo devuelto, ENTONCES `structure.folder_purposes` incluye una entrada para cada carpeta listada en `structure.folders`, sin excepciones — verificable iterando las 216 combinaciones y comparando ambas listas.
 
 ## Esquema de datos
 **Entrada** (`POST /plan`):
@@ -71,7 +73,7 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 {
   "archetype": "action_first | knowledge_first | agent_first | hybrid",
   "justification": ["string (con referencia a la fuente del benchmark)"],
-  "structure": {"folders": ["string"], "frontmatter_fields": ["string"]},
+  "structure": {"folders": ["string"], "folder_purposes": {"nombre_carpeta": "explicación humana de 1-2 frases: qué va acá y para qué sirve"}, "frontmatter_fields": ["string"]},
   "skills": [{"name": "string", "description": "string", "format": "markdown_descriptive"}]
 }
 ```
@@ -103,7 +105,7 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - Python 3.11 + FastAPI (mismo patrón arquitectónico que Rikra)
 - MCP server nativo (`/mcp`) + API REST documentada con OpenAPI 3.x (compatible con Custom GPT Actions)
 - Motor de recomendación: árbol de decisión determinístico sobre las dimensiones del benchmark — sin LLM en el core (transparencia + costo cero por request; alineado a Soberanía de Tokens, T1). LLM opcional solo para personalizar el *tono* del texto de salida, nunca la decisión.
-- Base de conocimiento: `knowledge/benchmark.yaml` versionado en el repo, resultado documentado de la fase de investigación (fuente de verdad, editable sin tocar código)
+- Base de conocimiento: `knowledge/benchmark.yaml` versionado en el repo, resultado documentado de la fase de investigación (fuente de verdad, editable sin tocar código). Incluye un catálogo de propósito por carpeta (una entrada reutilizable por nombre — ej. `Inbox/` tiene el mismo propósito se use en el arquetipo que se use), no uno distinto por arquetipo.
 - Deploy: Render (free tier, requiere tarjeta solo para verificación por $1 reembolsado, se duerme tras ~15 min de inactividad)
 - Licencia: MIT, repo público
 
@@ -121,6 +123,19 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 
 ## Historial de renombres
 - v1.0.x: el concepto se llamaba "diagnóstico" (`POST /diagnose`, tool `diagnose`, modelos `DiagnoseRequest`/`DiagnoseResponse`). Renombrado en v2.0.0 a `POST /plan` / tool `create_second_brain_plan` porque "diagnóstico" implica evaluar algo existente, y esta herramienta es para crear un Segundo Cerebro desde cero, no para auditar uno. Es un cambio breaking de la API pública.
+
+## Catálogo de propósito por carpeta (para `structure.folder_purposes`)
+Una entrada por nombre de carpeta, reutilizable entre arquetipos — no se redacta libremente por arquetipo:
+- `Projects/` → "Proyectos activos con objetivo y fecha de cierre definidos — algo que estás ejecutando ahora, no una idea suelta."
+- `Areas/` → "Responsabilidades continuas, sin fecha de cierre — cosas que sostenés en el tiempo, no que 'terminás'."
+- `Resources/` → "Material de referencia por tema, sin acción asociada — para consultar, no para ejecutar."
+- `Archive/` → "Todo lo que ya no está activo pero querés conservar — proyectos cerrados, áreas que dejaste de sostener."
+- `Inbox/` → "Captura sin fricción — todo entra acá primero, sin clasificar, para procesar después."
+- `Notas-permanentes/` → "Ideas ya procesadas y redactadas con tus propias palabras, una idea por nota, listas para conectarse entre sí."
+- `MOCs/` → "Mapas de contenido — páginas hub que agrupan y dan contexto a un grupo de notas permanentes sobre un mismo tema."
+- `active/` → "Lo que estás usando activamente ahora mismo — lo primero que un agente de código debería leer."
+- `reference/` → "Información estable que consultás seguido pero no editás seguido."
+- `archive/` (agent-first) → "Lo que ya no es relevante pero se conserva con historial — no se borra, se archiva."
 
 ## Preguntas abiertas
 - Ninguna bloqueante. Pendiente menor: verificar disponibilidad de "Second Brain Starter" como nombre de repo/dominio antes de publicar.
