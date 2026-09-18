@@ -67,6 +67,17 @@ class CreateSecondBrainPlanRequest(BaseModel):
 
 class Structure(BaseModel):
     folders: list[str] = Field(description="Carpetas recomendadas, relativas a la raíz del vault.")
+    folder_purposes: dict[str, str] = Field(
+        description=(
+            "Propósito de cada carpeta de `folders`, en 1-2 frases en lenguaje "
+            "humano (docs/SPEC.md, 'Catálogo de propósito por carpeta'). Cubre "
+            "cada carpeta de `folders` sin excepciones — nunca solo un "
+            "subconjunto. Pensado para que el agente llamador escriba el "
+            "README.md de cada carpeta y le explique el propósito a la "
+            "persona, no solo liste nombres (ver 'Contrato de interacción con "
+            "el agente llamador')."
+        )
+    )
     frontmatter_fields: list[str] = Field(
         description="Campos de frontmatter YAML recomendados para las notas."
     )

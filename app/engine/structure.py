@@ -1,10 +1,20 @@
 """Armado de `structure` y `skills` (Fase 3, T14 — docs/tasks.md).
 
-Arma `structure.folders`/`structure.frontmatter_fields` del arquetipo
-final y selecciona entre 3 y 5 `skills` de `skills_catalog`. Para
-`hybrid`, combina los sets base de los 3 arquetipos, priorizando el que
-coincide con la Dimensión 1 (`purpose`) — "Combinación de los tres sets
-anteriores, priorizada por la respuesta a la dimensión 1" (docs/BENCHMARK.md).
+Arma `structure.folders`/`structure.folder_purposes`/
+`structure.frontmatter_fields` del arquetipo final y selecciona entre 3 y
+5 `skills` de `skills_catalog`. Para `hybrid`, combina los sets base de
+los 3 arquetipos, priorizando el que coincide con la Dimensión 1
+(`purpose`) — "Combinación de los tres sets anteriores, priorizada por la
+respuesta a la dimensión 1" (docs/BENCHMARK.md).
+
+`folder_purposes` sale de `benchmark.folder_purposes` (catálogo único,
+reutilizable entre arquetipos — docs/SPEC.md, "Catálogo de propósito por
+carpeta"), nunca redactado distinto por arquetipo. Cubre cada carpeta de
+`folders` sin excepciones — el schema de `knowledge/benchmark.yaml`
+(app/knowledge/schema.py) ya garantiza en la carga que toda carpeta
+posible de cualquier arquetipo o del modificador de `capture_volume`
+tiene su entrada en el catálogo, así que el lookup de abajo nunca falla
+en un benchmark válido.
 
 Aplica el modificador de `capture_volume` (Dimensión 4):
 - `sporadic` → sin cambios.
@@ -98,4 +108,8 @@ def build_structure_and_skills(
     skill_outputs = [
         SkillOutput(name=s.name, description=s.description, format=s.format) for s in skills
     ]
-    return Structure(folders=folders, frontmatter_fields=frontmatter_fields), skill_outputs
+    folder_purposes = {folder: benchmark.folder_purposes[folder] for folder in folders}
+    structure = Structure(
+        folders=folders, folder_purposes=folder_purposes, frontmatter_fields=frontmatter_fields
+    )
+    return structure, skill_outputs

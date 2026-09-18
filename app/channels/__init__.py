@@ -7,7 +7,10 @@ en `rest.py` y `mcp_server.py`, para que ambos canales muestren
 exactamente el mismo contrato (docs/SPEC.md, "Contrato de interacción
 con el agente llamador"): si faltan respuestas, preguntarlas con el
 texto de "Copy de las preguntas"; nunca leer archivos del usuario para
-inferirlas; encuadrar como crear, no como diagnosticar.
+inferirlas; encuadrar como crear, no como diagnosticar; y (v2.1.0, cambio
+aditivo) al materializar los archivos reales, usar `structure.folder_purposes`
+para escribir el README.md de cada carpeta y explicarle a la persona el
+propósito de cada una, no solo listarlas.
 """
 
 from __future__ import annotations
@@ -45,5 +48,11 @@ TOOL_DESCRIPTION = (
     "asumas que existe un Segundo Cerebro previo para completar respuestas "
     "faltantes. Esta tool no lee nada del usuario — todo el input viaja explícito "
     "en esta llamada.\n"
-    "3. Encuadrá siempre como crear/armar, nunca como diagnosticar/evaluar."
+    "3. Encuadrá siempre como crear/armar, nunca como diagnosticar/evaluar.\n"
+    "4. Al crear los archivos reales de la estructura (paso separado y explícito, "
+    "después de mostrar el plan), usá el texto de structure.folder_purposes para "
+    "escribir el README.md de cada carpeta en lenguaje humano (qué va ahí y para "
+    "qué sirve), y para explicarle a la persona, en el resumen de lo que hiciste, "
+    "el propósito de cada carpeta — no te limites a listarlas por nombre ni a "
+    "reglas para el agente (frontmatter, convenciones)."
 )
