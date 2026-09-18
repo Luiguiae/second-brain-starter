@@ -1,7 +1,8 @@
 """Validación de entrada — estados de error 422/400 (Fase 4, T17-T18 — docs/tasks.md).
 
-Envuelve la validación de Pydantic de `DiagnoseRequest`, distinguiendo dos
-estados de error explícitos y distintos (docs/SPEC.md, "Estados de error"):
+Envuelve la validación de Pydantic de `CreateSecondBrainPlanRequest`,
+distinguiendo dos estados de error explícitos y distintos (docs/SPEC.md,
+"Estados de error"):
 
 - Campos obligatorios faltantes → `MissingFieldsError` (422), con la
   lista exacta de campos faltantes.
@@ -21,7 +22,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.knowledge.schema import DIMENSION_VALUES
-from app.models.diagnose import DiagnoseRequest
+from app.models.plan import CreateSecondBrainPlanRequest
 
 
 class MissingFieldsError(Exception):
@@ -49,16 +50,16 @@ def classify_validation_errors(
 ) -> MissingFieldsError | InvalidEnumValueError:
     """Clasifica los errores crudos de un `pydantic.ValidationError`.
 
-    Se usa tanto desde `validate_diagnose_request` (abajo, para MCP y para
-    cualquier validación manual) como desde el exception handler de
+    Se usa tanto desde `validate_create_plan_request` (abajo, para MCP y
+    para cualquier validación manual) como desde el exception handler de
     `RequestValidationError` del canal REST (Fase 5, T23) — una sola
     implementación de la clasificación, dos puntos de entrada, para que
     ambos canales clasifiquen exactamente igual (Fase 7, T29).
 
     `loc[-1]` en vez de `loc[0]`: FastAPI antepone `"body"` al `loc` de
     los errores del body (`("body", "purpose")`), mientras que una
-    validación directa contra `DiagnoseRequest.model_validate` produce
-    `("purpose",)` — `loc[-1]` funciona igual en ambos casos.
+    validación directa contra `CreateSecondBrainPlanRequest.model_validate`
+    produce `("purpose",)` — `loc[-1]` funciona igual en ambos casos.
     """
     missing = sorted({str(e["loc"][-1]) for e in errors if e["type"] == "missing"})
     if missing:
@@ -73,7 +74,7 @@ def classify_validation_errors(
     )
 
 
-def validate_diagnose_request(payload: dict[str, Any]) -> DiagnoseRequest:
+def validate_create_plan_request(payload: dict[str, Any]) -> CreateSecondBrainPlanRequest:
     """Valida un payload crudo (p. ej. el JSON de un request HTTP o de una tool MCP).
 
     Raises:
@@ -83,6 +84,6 @@ def validate_diagnose_request(payload: dict[str, Any]) -> DiagnoseRequest:
             validación de tipo/formato de Pydantic).
     """
     try:
-        return DiagnoseRequest.model_validate(payload)
+        return CreateSecondBrainPlanRequest.model_validate(payload)
     except ValidationError as exc:
         raise classify_validation_errors(exc.errors()) from exc

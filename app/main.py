@@ -78,11 +78,12 @@ _mcp_transport_security = TransportSecuritySettings(
 app = FastAPI(
     title="Second Brain Starter",
     description=(
-        "Diagnostica el perfil de conocimiento de una persona y recomienda la "
-        "estructura de su Segundo Cerebro (PKM) + un set inicial de skills. "
-        "Motor de reglas determinístico, sin LLM en el core (ver AGENTS.md)."
+        "Crea la base de un Segundo Cerebro (PKM) desde cero a partir de 5 "
+        "respuestas explícitas y recomienda su estructura + un set inicial de "
+        "skills. Motor de reglas determinístico, sin LLM en el core (ver "
+        "AGENTS.md)."
     ),
-    version="1.0.0",
+    version="2.0.0",
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     servers=_servers,
     lifespan=_lifespan,
@@ -112,9 +113,9 @@ def _validation_error_response(exc: MissingFieldsError | InvalidEnumValueError) 
 async def handle_request_validation_error(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    """FastAPI ya validó `payload: DiagnoseRequest` y falló — reclasificamos
-    sus errores crudos con la misma lógica que usa el canal MCP (T23),
-    para no reimplementar la distinción 422/400 dos veces."""
+    """FastAPI ya validó `payload: CreateSecondBrainPlanRequest` y falló —
+    reclasificamos sus errores crudos con la misma lógica que usa el canal
+    MCP (T23), para no reimplementar la distinción 422/400 dos veces."""
     classified = classify_validation_errors(exc.errors())
     return _validation_error_response(classified)
 
@@ -147,7 +148,7 @@ async def health() -> dict[str, str]:
 # T25: canal MCP nativo, montado en /mcp (docs/SPEC.md). Debe registrarse
 # DESPUÉS de toda ruta directa del app (arriba): un Mount en "/" hace match
 # de cualquier path no capturado todavía por una ruta más específica, así
-# que si se registrara antes interceptaría /diagnose, /health, /openapi.json,
+# que si se registrara antes interceptaría /plan, /health, /openapi.json,
 # etc. `streamable_http_app()` ya expone su propia ruta interna en /mcp por
 # defecto, así que montarlo en la raíz "/" da como resultado exactamente esa
 # ruta en la app combinada, sin duplicar el prefijo.

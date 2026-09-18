@@ -22,7 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.knowledge.schema import ArchetypeId, Benchmark
-from app.models.diagnose import DiagnoseRequest
+from app.models.plan import CreateSecondBrainPlanRequest
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,9 @@ class ArchetypeDecision:
     study_note: str | None
 
 
-def decide_archetype(request: DiagnoseRequest, benchmark: Benchmark) -> ArchetypeDecision:
+def decide_archetype(
+    request: CreateSecondBrainPlanRequest, benchmark: Benchmark
+) -> ArchetypeDecision:
     base_rule = next(
         r for r in benchmark.decision_rules.base_by_purpose if r.purpose == request.purpose
     )

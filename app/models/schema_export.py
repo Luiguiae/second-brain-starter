@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.models.diagnose import DiagnoseRequest, DiagnoseResponse
+from app.models.plan import CreateSecondBrainPlanRequest, CreateSecondBrainPlanResponse
 
 
-def diagnose_request_json_schema() -> dict[str, Any]:
-    """JSON Schema (draft usado por Pydantic v2) de `DiagnoseRequest`."""
-    return DiagnoseRequest.model_json_schema()
+def plan_request_json_schema() -> dict[str, Any]:
+    """JSON Schema (draft usado por Pydantic v2) de `CreateSecondBrainPlanRequest`."""
+    return CreateSecondBrainPlanRequest.model_json_schema()
 
 
-def diagnose_response_json_schema() -> dict[str, Any]:
-    """JSON Schema (draft usado por Pydantic v2) de `DiagnoseResponse`."""
-    return DiagnoseResponse.model_json_schema()
+def plan_response_json_schema() -> dict[str, Any]:
+    """JSON Schema (draft usado por Pydantic v2) de `CreateSecondBrainPlanResponse`."""
+    return CreateSecondBrainPlanResponse.model_json_schema()

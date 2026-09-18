@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from app.engine.decision import ArchetypeDecision
 from app.knowledge.schema import BASE_ARCHETYPE_IDS, ArchetypeId, Benchmark, SkillCatalogEntry
-from app.models.diagnose import SkillOutput, Structure
+from app.models.plan import SkillOutput, Structure
 
 _MAX_SKILLS = 5
 _MIN_SKILLS = 3

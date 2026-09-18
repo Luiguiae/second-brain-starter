@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from app.engine.decision import ArchetypeDecision
 from app.knowledge.schema import Benchmark
-from app.models.diagnose import DiagnoseRequest
+from app.models.plan import CreateSecondBrainPlanRequest
 
 
 def _source_description(benchmark: Benchmark, source_id: str) -> str:
@@ -32,7 +32,7 @@ def _system_name(benchmark: Benchmark, system_id: str) -> str:
 
 
 def build_justification(
-    request: DiagnoseRequest, decision: ArchetypeDecision, benchmark: Benchmark
+    request: CreateSecondBrainPlanRequest, decision: ArchetypeDecision, benchmark: Benchmark
 ) -> list[str]:
     lines: list[str] = []
 

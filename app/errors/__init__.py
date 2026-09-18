@@ -11,7 +11,7 @@ from app.errors.validation import (
     InvalidEnumValueError,
     MissingFieldsError,
     classify_validation_errors,
-    validate_diagnose_request,
+    validate_create_plan_request,
 )
 
 __all__ = [
@@ -20,5 +20,5 @@ __all__ = [
     "InvalidEnumValueError",
     "MissingFieldsError",
     "classify_validation_errors",
-    "validate_diagnose_request",
+    "validate_create_plan_request",
 ]
