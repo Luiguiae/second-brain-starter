@@ -3,6 +3,9 @@
 Contra la app real (`app.main.app`, sin mockear el engine): casos felices
 (uno por arquetipo) + los 3 estados de error verificables a nivel HTTP.
 El 4to estado (mismatch de schema MCP/REST) se completa en T29.
+
+Renombrado en v2.0.0 (docs/SPEC.md, "Historial de renombres"):
+`POST /diagnose` → `POST /plan`.
 """
 
 from __future__ import annotations
@@ -54,10 +57,10 @@ def test_health_endpoint() -> None:
 
 
 @pytest.mark.parametrize("expected_archetype,payload", HAPPY_CASES.items(), ids=HAPPY_CASES.keys())
-def test_diagnose_happy_path_returns_expected_archetype(
+def test_plan_happy_path_returns_expected_archetype(
     expected_archetype: str, payload: dict[str, str]
 ) -> None:
-    response = client.post("/diagnose", json=payload)
+    response = client.post("/plan", json=payload)
 
     assert response.status_code == 200
     body = response.json()
@@ -67,8 +70,8 @@ def test_diagnose_happy_path_returns_expected_archetype(
     assert body["structure"]["folders"]
 
 
-def test_diagnose_missing_fields_returns_422_with_field_list() -> None:
-    response = client.post("/diagnose", json={"purpose": "execute_projects"})
+def test_plan_missing_fields_returns_422_with_field_list() -> None:
+    response = client.post("/plan", json={"purpose": "execute_projects"})
 
     assert response.status_code == 422
     body = response.json()
@@ -81,9 +84,9 @@ def test_diagnose_missing_fields_returns_422_with_field_list() -> None:
     }
 
 
-def test_diagnose_invalid_enum_returns_400_with_valid_values() -> None:
+def test_plan_invalid_enum_returns_400_with_valid_values() -> None:
     payload = {**HAPPY_CASES["action_first"], "purpose": "not_a_real_purpose"}
-    response = client.post("/diagnose", json=payload)
+    response = client.post("/plan", json=payload)
 
     assert response.status_code == 400
     body = response.json()
@@ -97,13 +100,13 @@ def test_diagnose_invalid_enum_returns_400_with_valid_values() -> None:
     }
 
 
-def test_diagnose_benchmark_unavailable_returns_500(monkeypatch) -> None:
+def test_plan_benchmark_unavailable_returns_500(monkeypatch) -> None:
     def _always_fails(**kwargs):
         raise BenchmarkLoadError("simulado: knowledge/benchmark.yaml corrupto")
 
     monkeypatch.setattr("app.channels.rest.get_benchmark", _always_fails)
 
-    response = client.post("/diagnose", json=HAPPY_CASES["action_first"])
+    response = client.post("/plan", json=HAPPY_CASES["action_first"])
 
     assert response.status_code == 500
     body = response.json()
@@ -111,13 +114,13 @@ def test_diagnose_benchmark_unavailable_returns_500(monkeypatch) -> None:
     assert "simulado" in body["message"]
 
 
-def test_openapi_json_is_openapi_3x_with_diagnose_operation() -> None:
+def test_openapi_json_is_openapi_3x_with_plan_operation() -> None:
     response = client.get("/openapi.json")
     assert response.status_code == 200
     schema = response.json()
     assert schema["openapi"].startswith("3.")
-    assert "/diagnose" in schema["paths"]
+    assert "/plan" in schema["paths"]
     operation_ids = {
         op.get("operationId") for path in schema["paths"].values() for op in path.values()
     }
-    assert "diagnoseSecondBrain" in operation_ids
+    assert "createSecondBrainPlan" in operation_ids

@@ -21,7 +21,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from app.channels.mcp_server import mcp_server
 from app.errors.knowledge_errors import BenchmarkLoadError as LoaderBenchmarkLoadError
 from app.main import app
-from app.models.schema_export import diagnose_response_json_schema
+from app.models.schema_export import plan_response_json_schema
 
 pytestmark = pytest.mark.anyio
 
@@ -47,12 +47,12 @@ def _parse_tool_error(exc: ToolError) -> dict:
 async def test_missing_fields_error_is_equivalent_across_channels() -> None:
     payload = {k: v for k, v in VALID_PAYLOAD.items() if k != "technical_profile"}
 
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 422
     rest_body = rest_response.json()
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool("create_second_brain_plan", payload)
     mcp_body = _parse_tool_error(excinfo.value)
 
     assert rest_body == mcp_body == {
@@ -64,12 +64,12 @@ async def test_missing_fields_error_is_equivalent_across_channels() -> None:
 async def test_invalid_enum_error_is_equivalent_across_channels() -> None:
     payload = {**VALID_PAYLOAD, "purpose": "not_a_real_purpose"}
 
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 400
     rest_body = rest_response.json()
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool("create_second_brain_plan", payload)
     mcp_body = _parse_tool_error(excinfo.value)
 
     assert rest_body == mcp_body
@@ -87,16 +87,16 @@ async def test_invalid_enum_edge_cases_are_equivalent_across_channels(invalid_pu
     (el workaround `str | None` — ver su docstring) contra la de Pydantic en
     REST: casing distinto, string vacío, y whitespace no son `None`, así que
     ninguno de los dos activa el filtrado de `None` del canal MCP — ambos
-    deben llegar a `validate_diagnose_request` intactos y clasificarse
+    deben llegar a `validate_create_plan_request` intactos y clasificarse
     exactamente igual en los dos canales."""
     payload = {**VALID_PAYLOAD, "purpose": invalid_purpose}
 
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 400
     rest_body = rest_response.json()
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool("create_second_brain_plan", payload)
     mcp_body = _parse_tool_error(excinfo.value)
 
     assert rest_body == mcp_body
@@ -120,7 +120,7 @@ async def test_explicit_null_is_a_known_divergence_of_the_mcp_workaround() -> No
     ausente en `arguments` y un `purpose: null` explícito producen, los
     dos, `purpose=None` dentro de la función — indistinguibles en ese
     punto sin acceder a los argumentos crudos pre-binding del SDK (fuera
-    de alcance de este workaround). Por diseño, `diagnose_tool` filtra
+    de alcance de este workaround). Por diseño, `create_second_brain_plan_tool` filtra
     todo `None` para preservar la clasificación correcta del caso común
     (un campo realmente ausente -> missing_fields, ver
     test_missing_fields_error_is_equivalent_across_channels), a costa de
@@ -131,7 +131,7 @@ async def test_explicit_null_is_a_known_divergence_of_the_mcp_workaround() -> No
     """
     payload = {**VALID_PAYLOAD, "purpose": None}
 
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 400
     rest_body = rest_response.json()
     assert rest_body == {
@@ -142,7 +142,7 @@ async def test_explicit_null_is_a_known_divergence_of_the_mcp_workaround() -> No
     }
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool("create_second_brain_plan", payload)
     mcp_body = _parse_tool_error(excinfo.value)
     assert mcp_body == {"error": "missing_fields", "missing_fields": ["purpose"]}
 
@@ -154,12 +154,12 @@ async def test_benchmark_unavailable_error_is_equivalent_across_channels(monkeyp
     monkeypatch.setattr("app.channels.rest.get_benchmark", _always_fails)
     monkeypatch.setattr("app.channels.mcp_server.get_benchmark", _always_fails)
 
-    rest_response = client.post("/diagnose", json=VALID_PAYLOAD)
+    rest_response = client.post("/plan", json=VALID_PAYLOAD)
     assert rest_response.status_code == 500
     rest_body = rest_response.json()
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", VALID_PAYLOAD)
+        await mcp_server.call_tool("create_second_brain_plan", VALID_PAYLOAD)
     mcp_body = _parse_tool_error(excinfo.value)
 
     assert rest_body["error"] == mcp_body["error"] == "benchmark_unavailable"
@@ -183,12 +183,12 @@ async def test_benchmark_unavailable_error_is_equivalent_across_channels(monkeyp
 async def test_happy_output_validates_against_shared_schema_in_both_channels(
     payload: dict[str, str],
 ) -> None:
-    schema = diagnose_response_json_schema()
+    schema = plan_response_json_schema()
 
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 200
     jsonschema.validate(instance=rest_response.json(), schema=schema)
 
-    mcp_result = await mcp_server.call_tool("diagnose", payload)
+    mcp_result = await mcp_server.call_tool("create_second_brain_plan", payload)
     assert mcp_result.is_error is False
     jsonschema.validate(instance=mcp_result.structured_content, schema=schema)

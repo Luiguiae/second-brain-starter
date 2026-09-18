@@ -2,7 +2,7 @@
 
 Itera el producto cartesiano completo de los enums válidos de los 5
 campos de entrada (4x3x3x3x2 = 216 combinaciones) y verifica que el
-engine resuelve cada una a un `DiagnoseResponse` válido, sin excepción y
+engine resuelve cada una a un `CreateSecondBrainPlanResponse` válido, sin excepción y
 validando contra el JSON Schema de T10. Además asertan explícitamente
 (criterio de done actualizado):
 
@@ -21,10 +21,10 @@ import itertools
 import jsonschema
 import pytest
 
-from app.engine import diagnose
+from app.engine import create_plan
 from app.knowledge.schema import DIMENSION_VALUES
-from app.models.diagnose import DiagnoseRequest
-from app.models.schema_export import diagnose_response_json_schema
+from app.models.plan import CreateSecondBrainPlanRequest
+from app.models.schema_export import plan_response_json_schema
 
 _DIMENSIONS = (
     "purpose",
@@ -47,12 +47,12 @@ def test_all_216_combinations_exist() -> None:
 def test_every_combination_resolves_without_exception_and_matches_schema(
     combo: tuple[str, str, str, str, str], benchmark
 ) -> None:
-    request_ = DiagnoseRequest(**dict(zip(_DIMENSIONS, combo, strict=True)))
+    request_ = CreateSecondBrainPlanRequest(**dict(zip(_DIMENSIONS, combo, strict=True)))
 
-    response = diagnose(request_, benchmark)
+    response = create_plan(request_, benchmark)
 
     jsonschema.validate(
-        instance=response.model_dump(mode="json"), schema=diagnose_response_json_schema()
+        instance=response.model_dump(mode="json"), schema=plan_response_json_schema()
     )
 
     assert 3 <= len(response.skills) <= 5
@@ -83,8 +83,8 @@ def test_technical_profile_only_changes_justification(
 ) -> None:
     purpose, maintenance_tolerance, agent_usage, capture_volume = combo
 
-    response_markdown = diagnose(
-        DiagnoseRequest(
+    response_markdown = create_plan(
+        CreateSecondBrainPlanRequest(
             purpose=purpose,
             maintenance_tolerance=maintenance_tolerance,
             agent_usage=agent_usage,
@@ -93,8 +93,8 @@ def test_technical_profile_only_changes_justification(
         ),
         benchmark,
     )
-    response_visual = diagnose(
-        DiagnoseRequest(
+    response_visual = create_plan(
+        CreateSecondBrainPlanRequest(
             purpose=purpose,
             maintenance_tolerance=maintenance_tolerance,
             agent_usage=agent_usage,

@@ -10,32 +10,32 @@ from __future__ import annotations
 
 import pytest
 
-from app.engine import diagnose
-from app.models.diagnose import DiagnoseRequest
+from app.engine import create_plan
+from app.models.plan import CreateSecondBrainPlanRequest
 
-CASES: dict[str, DiagnoseRequest] = {
-    "action_first": DiagnoseRequest(
+CASES: dict[str, CreateSecondBrainPlanRequest] = {
+    "action_first": CreateSecondBrainPlanRequest(
         purpose="execute_projects",
         maintenance_tolerance="medium",
         agent_usage="not_interested",
         capture_volume="sporadic",
         technical_profile="markdown_git_comfortable",
     ),
-    "knowledge_first": DiagnoseRequest(
+    "knowledge_first": CreateSecondBrainPlanRequest(
         purpose="produce_knowledge",
         maintenance_tolerance="high",
         agent_usage="not_interested",
         capture_volume="sporadic",
         technical_profile="markdown_git_comfortable",
     ),
-    "agent_first": DiagnoseRequest(
+    "agent_first": CreateSecondBrainPlanRequest(
         purpose="agent_memory",
         maintenance_tolerance="medium",
         agent_usage="not_interested",
         capture_volume="sporadic",
         technical_profile="markdown_git_comfortable",
     ),
-    "hybrid": DiagnoseRequest(
+    "hybrid": CreateSecondBrainPlanRequest(
         purpose="execute_projects",
         maintenance_tolerance="medium",
         agent_usage="already_using",
@@ -63,18 +63,18 @@ SKILL_OWNER_ARCHETYPE = {
 
 @pytest.mark.parametrize("archetype,request_", CASES.items(), ids=CASES.keys())
 def test_skills_count_is_between_3_and_5(
-    archetype: str, request_: DiagnoseRequest, benchmark
+    archetype: str, request_: CreateSecondBrainPlanRequest, benchmark
 ) -> None:
-    response = diagnose(request_, benchmark)
+    response = create_plan(request_, benchmark)
     assert response.archetype == archetype
     assert 3 <= len(response.skills) <= 5
 
 
 @pytest.mark.parametrize("archetype,request_", CASES.items(), ids=CASES.keys())
 def test_all_skills_exist_in_the_catalog(
-    archetype: str, request_: DiagnoseRequest, benchmark
+    archetype: str, request_: CreateSecondBrainPlanRequest, benchmark
 ) -> None:
-    response = diagnose(request_, benchmark)
+    response = create_plan(request_, benchmark)
     catalog_names = {s.name for s in benchmark.skills_catalog}
     for skill in response.skills:
         assert skill.name in catalog_names
@@ -82,7 +82,7 @@ def test_all_skills_exist_in_the_catalog(
 
 
 def test_hybrid_combines_skills_from_more_than_one_base_archetype(benchmark) -> None:
-    response = diagnose(CASES["hybrid"], benchmark)
+    response = create_plan(CASES["hybrid"], benchmark)
     owner_archetypes = {SKILL_OWNER_ARCHETYPE[s.name] for s in response.skills}
     owner_archetypes.discard(None)
     assert len(owner_archetypes) > 1, (

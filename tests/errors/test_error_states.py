@@ -15,7 +15,7 @@ from app.errors.knowledge_errors import BenchmarkLoadError, get_benchmark
 from app.errors.validation import (
     InvalidEnumValueError,
     MissingFieldsError,
-    validate_diagnose_request,
+    validate_create_plan_request,
 )
 from app.knowledge.loader import BenchmarkLoadError as LoaderBenchmarkLoadError
 
@@ -32,7 +32,7 @@ VALID_PAYLOAD = {
 
 
 def test_valid_payload_does_not_raise() -> None:
-    request_ = validate_diagnose_request(VALID_PAYLOAD)
+    request_ = validate_create_plan_request(VALID_PAYLOAD)
     assert request_.purpose == "execute_projects"
 
 
@@ -42,7 +42,7 @@ def test_missing_fields_error_lists_exactly_the_missing_fields() -> None:
     del payload["technical_profile"]
 
     with pytest.raises(MissingFieldsError) as excinfo:
-        validate_diagnose_request(payload)
+        validate_create_plan_request(payload)
 
     assert set(excinfo.value.missing_fields) == {"capture_volume", "technical_profile"}
 
@@ -52,14 +52,14 @@ def test_missing_single_field_reports_only_that_field() -> None:
     del payload["purpose"]
 
     with pytest.raises(MissingFieldsError) as excinfo:
-        validate_diagnose_request(payload)
+        validate_create_plan_request(payload)
 
     assert excinfo.value.missing_fields == ["purpose"]
 
 
 def test_empty_payload_lists_all_five_fields_missing() -> None:
     with pytest.raises(MissingFieldsError) as excinfo:
-        validate_diagnose_request({})
+        validate_create_plan_request({})
 
     assert set(excinfo.value.missing_fields) == {
         "purpose",
@@ -77,7 +77,7 @@ def test_invalid_enum_value_error_reports_field_and_valid_values() -> None:
     payload = {**VALID_PAYLOAD, "purpose": "not_a_real_purpose"}
 
     with pytest.raises(InvalidEnumValueError) as excinfo:
-        validate_diagnose_request(payload)
+        validate_create_plan_request(payload)
 
     assert excinfo.value.field == "purpose"
     assert excinfo.value.value == "not_a_real_purpose"
@@ -93,7 +93,7 @@ def test_missing_fields_take_priority_over_invalid_enum_values() -> None:
     payload = {"purpose": "not_a_real_purpose"}  # falta + inválido a la vez
 
     with pytest.raises(MissingFieldsError):
-        validate_diagnose_request(payload)
+        validate_create_plan_request(payload)
 
 
 # --- Estado 3: knowledge/benchmark.yaml no disponible/corrupto -> 500 -----

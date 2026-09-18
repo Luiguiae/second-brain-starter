@@ -82,11 +82,11 @@ REPRESENTATIVE_CASES: dict[str, dict[str, str]] = {
 
 @pytest.mark.parametrize("payload", REPRESENTATIVE_CASES.values(), ids=REPRESENTATIVE_CASES.keys())
 async def test_rest_and_mcp_return_structurally_identical_output(payload: dict[str, str]) -> None:
-    rest_response = client.post("/diagnose", json=payload)
+    rest_response = client.post("/plan", json=payload)
     assert rest_response.status_code == 200
     rest_body = rest_response.json()
 
-    mcp_result = await mcp_server.call_tool("diagnose", payload)
+    mcp_result = await mcp_server.call_tool("create_second_brain_plan", payload)
     assert mcp_result.is_error is False
     mcp_body = mcp_result.structured_content
 

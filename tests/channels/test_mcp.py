@@ -3,10 +3,11 @@
 Dos niveles, contra el servidor MCP real (`app.channels.mcp_server.mcp_server`,
 el mismo objeto que `app.main` monta en `/mcp`), sin mockear el engine:
 
-1. `mcp_server.call_tool("diagnose", ...)` — invoca el mismo código de
-   despacho de tool que usa cualquier transporte (stdio/SSE/streamable-http),
-   saltándose solo el handshake de sesión JSON-RPC. Es la vía rápida y
-   estable para los casos felices y los 3 estados de error.
+1. `mcp_server.call_tool("create_second_brain_plan", ...)` — invoca el mismo
+   código de despacho de tool que usa cualquier transporte
+   (stdio/SSE/streamable-http), saltándose solo el handshake de sesión
+   JSON-RPC. Es la vía rápida y estable para los casos felices y los 3
+   estados de error.
 2. Un smoke test end-to-end real: levanta `app.main.app` completa (con su
    lifespan, que arranca el session_manager de MCP — ver app/main.py) vía
    `TestClient` y hace el handshake `initialize` real por HTTP contra `/mcp`,
@@ -15,11 +16,15 @@ el mismo objeto que `app.main` monta en `/mcp`), sin mockear el engine:
 
 Nota sobre el nivel 1: cuando el tool function levanta `ToolError`, el
 wrapper interno del SDK (`mcp/server/mcpserver/tools/base.py`) lo vuelve a
-envolver anteponiendo `"Error executing tool diagnose: "` al mensaje — por
-eso `_parse_tool_error` busca el primer `{` en el texto en vez de asumir que
-el mensaje completo es JSON. Sobre el transporte real (JSON-RPC), esa misma
-excepción se traduce a `CallToolResult(isError=True, ...)` — el equivalente
-MCP nativo a un error, que es lo que T26 pide.
+envolver anteponiendo `"Error executing tool create_second_brain_plan: "`
+al mensaje — por eso `_parse_tool_error` busca el primer `{` en el texto
+en vez de asumir que el mensaje completo es JSON. Sobre el transporte
+real (JSON-RPC), esa misma excepción se traduce a
+`CallToolResult(isError=True, ...)` — el equivalente MCP nativo a un
+error, que es lo que T26 pide.
+
+Renombrado en v2.0.0 (docs/SPEC.md, "Historial de renombres"): tool
+`diagnose` → `create_second_brain_plan`.
 """
 
 from __future__ import annotations
@@ -33,6 +38,8 @@ from app.channels.mcp_server import mcp_server
 from app.errors.knowledge_errors import BenchmarkLoadError as LoaderBenchmarkLoadError
 
 pytestmark = pytest.mark.anyio
+
+TOOL_NAME = "create_second_brain_plan"
 
 HAPPY_CASES: dict[str, dict[str, str]] = {
     "action_first": {
@@ -71,16 +78,16 @@ def _parse_tool_error(exc: ToolError) -> dict:
     return json.loads(text[text.index("{") :])
 
 
-async def test_diagnose_tool_is_listed() -> None:
+async def test_create_second_brain_plan_tool_is_listed() -> None:
     tools = await mcp_server.list_tools()
-    assert any(t.name == "diagnose" for t in tools)
+    assert any(t.name == TOOL_NAME for t in tools)
 
 
 @pytest.mark.parametrize("expected_archetype,payload", HAPPY_CASES.items(), ids=HAPPY_CASES.keys())
-async def test_diagnose_tool_happy_path_returns_expected_archetype(
+async def test_create_second_brain_plan_tool_happy_path_returns_expected_archetype(
     expected_archetype: str, payload: dict[str, str]
 ) -> None:
-    result = await mcp_server.call_tool("diagnose", payload)
+    result = await mcp_server.call_tool(TOOL_NAME, payload)
 
     assert result.is_error is False
     assert result.structured_content["archetype"] == expected_archetype
@@ -88,21 +95,21 @@ async def test_diagnose_tool_happy_path_returns_expected_archetype(
     assert result.structured_content["justification"]
 
 
-async def test_diagnose_tool_missing_fields_raises_tool_error_with_field_list() -> None:
+async def test_create_plan_tool_missing_fields_raises_tool_error() -> None:
     payload = {k: v for k, v in HAPPY_CASES["action_first"].items() if k != "technical_profile"}
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool(TOOL_NAME, payload)
 
     parsed = _parse_tool_error(excinfo.value)
     assert parsed == {"error": "missing_fields", "missing_fields": ["technical_profile"]}
 
 
-async def test_diagnose_tool_invalid_enum_raises_tool_error_with_valid_values() -> None:
+async def test_create_plan_tool_invalid_enum_raises_tool_error_with_valid_values() -> None:
     payload = {**HAPPY_CASES["action_first"], "purpose": "not_a_real_purpose"}
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", payload)
+        await mcp_server.call_tool(TOOL_NAME, payload)
 
     parsed = _parse_tool_error(excinfo.value)
     assert parsed["error"] == "invalid_enum_value"
@@ -115,14 +122,14 @@ async def test_diagnose_tool_invalid_enum_raises_tool_error_with_valid_values() 
     }
 
 
-async def test_diagnose_tool_benchmark_unavailable_raises_tool_error(monkeypatch) -> None:
+async def test_create_plan_tool_benchmark_unavailable_raises_tool_error(monkeypatch) -> None:
     def _always_fails(**kwargs):
         raise LoaderBenchmarkLoadError("simulado: knowledge/benchmark.yaml corrupto")
 
     monkeypatch.setattr("app.channels.mcp_server.get_benchmark", _always_fails)
 
     with pytest.raises(ToolError) as excinfo:
-        await mcp_server.call_tool("diagnose", HAPPY_CASES["action_first"])
+        await mcp_server.call_tool(TOOL_NAME, HAPPY_CASES["action_first"])
 
     parsed = _parse_tool_error(excinfo.value)
     assert parsed["error"] == "benchmark_unavailable"
