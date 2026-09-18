@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.0.1 — Deploy final en Render (patch, sin cambios de código)
+
+Patch release: solo se resuelve dónde y cómo se despliega la app. Ningún archivo de `app/`, `tests/`, ni la lógica del motor de reglas cambió respecto a v1.0.0 — mismo `Dockerfile` de T31 en los tres intentos de plataforma.
+
+### Secuencia real de plataforma de deploy
+
+La plataforma de deploy cambió tres veces antes de asentarse; se documenta acá tal cual pasó, no como si siempre hubiese sido Render:
+
+1. **Railway** (spec original, docs/SPEC.md inicial) — descartada antes de deployar: costo, requiere plan pago para uso sostenido.
+2. **Koyeb** (adoptada para v1.0.0) — descartada en feb 2026: eliminó su plan gratuito al ser adquirida por Mistral AI, dejó de ser viable.
+3. **Render** (final) — confirmado en producción: **https://second-brain-starter.onrender.com**. Free tier con tarjeta solo para verificación de $1 (reembolsado) y sleep tras inactividad (cold start de ~40-60s en el primer request tras un período inactivo).
+
+### Verificado
+
+- Smoke test real (`scripts/smoke_test.sh`) contra el deploy de Render: los 3 checks (`GET /health`, `POST /diagnose`, `POST /mcp`) pasan.
+- `README.md`, `.env.example` y los comentarios de `app/main.py` actualizados al flujo real de Render (dashboard **New → Web Service** → conectar GitHub → Docker autodetectado → `PUBLIC_BASE_URL` → health check en `/health`).
+- Resuelve el punto "Pendiente de verificación manual" de v1.0.0 — el deploy real ya se ejecutó y se verificó, en Render en vez de en Koyeb.
+
 ## v1.0.0 — Iteración 1 (MVP)
 
 Implementación completa de [docs/SPEC.md](docs/SPEC.md), Iteración 1, siguiendo el plan de [docs/plan.md](docs/plan.md) y el desglose de [docs/tasks.md](docs/tasks.md) (T00→T34).
