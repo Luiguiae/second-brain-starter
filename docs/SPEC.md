@@ -1,20 +1,28 @@
 # Second Brain Starter
 
 ## Resumen
-Herramienta open source que diagnostica el perfil de conocimiento de una persona mediante un cuestionario corto y recomienda la estructura de su Segundo Cerebro (PKM) + un set inicial de skills/plantillas, expuesta simultáneamente como MCP server y API REST/OpenAPI para que Claude Code, GPT u otros agentes la invoquen directamente.
+Herramienta open source que ayuda a crear la base de un Segundo Cerebro (PKM) desde cero: hace 5 preguntas cortas en lenguaje natural y devuelve una estructura recomendada + un set inicial de skills/plantillas, expuesta simultáneamente como MCP server y API REST/OpenAPI para que Claude Code, GPT u otros agentes la invoquen directamente. No es una herramienta de evaluación de sistemas existentes — está pensada para alguien que todavía no tiene un Segundo Cerebro armado.
 
 ## Problema
-Construir un Segundo Cerebro obliga a elegir entre metodologías (PARA, Zettelkasten, LYT, Johnny Decimal) y herramientas (Obsidian, Notion, Tana, Reflect, Mem) sin criterio objetivo. La mayoría abandona por sobre-estructuración o parálisis de elección. No existe un diagnóstico que traduzca el perfil real de la persona en una estructura concreta, trazable a evidencia, y accionable el mismo día.
+Construir un Segundo Cerebro obliga a elegir entre metodologías (PARA, Zettelkasten, LYT, Johnny Decimal) y herramientas (Obsidian, Notion, Tana, Reflect, Mem) sin criterio objetivo. La mayoría abandona antes de empezar por parálisis de elección. No existe una guía que traduzca el perfil real de la persona en una estructura concreta, trazable a evidencia, y accionable el mismo día — sin exigirle que ya tenga algo armado para empezar.
 
 ## Usuarios objetivo
-Knowledge workers y builders técnicos, cómodos usando Claude Code o un GPT personalizado, que quieren iniciar o reestructurar su sistema de notas sin pagar el costo de investigar metodologías desde cero.
+Knowledge workers y builders técnicos, cómodos usando Claude Code o un GPT personalizado, que quieren crear su Segundo Cerebro desde cero sin pagar el costo de investigar metodologías por su cuenta.
 
 ## Casos de uso principales
-1. Como usuario nuevo, quiero responder un diagnóstico corto (8-12 preguntas) y recibir una estructura de Segundo Cerebro ajustada a mi perfil.
+1. Como usuario que no tiene ningún Segundo Cerebro armado, quiero que el agente (Claude Code, GPT) me haga las 5 preguntas en lenguaje natural, una por una si hace falta, y que a partir de mis respuestas me arme una estructura recomendada — nunca que infiera mis respuestas explorando mis archivos.
 2. Como usuario, quiero recibir junto a la estructura 3-5 skills/plantillas iniciales para empezar a usar el sistema el mismo día.
-3. Como desarrollador en Claude Code, quiero invocar el diagnóstico vía MCP sin salir de mi flujo de trabajo.
+3. Como desarrollador en Claude Code, quiero invocar la recomendación vía MCP sin salir de mi flujo de trabajo, con el agente preguntándome lo que falte antes de llamar al tool.
 4. Como usuario de un GPT personalizado, quiero invocar la misma lógica vía Action (OpenAPI).
 5. Como mantenedor, quiero que cada recomendación sea trazable a una fuente del benchmark, no a una heurística arbitraria.
+
+## Contrato de interacción con el agente llamador
+La tool (MCP y REST/OpenAPI) requiere las 5 dimensiones del Esquema de datos. La descripción del tool — lo que lee el agente llamador, no el usuario — debe instruir explícitamente:
+- Si falta alguna de las 5 respuestas, preguntarle al usuario cada una en lenguaje natural, usando el texto de la sección "Copy de las preguntas", una a la vez si hace falta — nunca asumir valores por defecto ni inferirlos.
+- Nunca leer archivos, explorar el sistema de archivos del usuario, ni asumir que existe un Segundo Cerebro previo para completar respuestas faltantes. Esta tool no lee nada del usuario — todo el input viaja explícito en la llamada.
+- Encuadrar la conversación como "vamos a crear/armar tu Segundo Cerebro", nunca como "voy a diagnosticar/evaluar lo que ya tenés".
+
+Límite honesto: esto depende de que el agente llamador (Claude Code, GPT, u otro cliente MCP) respete la instrucción de la descripción del tool. El código no puede forzar a un agente externo a preguntar antes de llamar — es el máximo que el patrón de tool-calling permite.
 
 ## Lógica de decisión (MVP, determinística)
 La Dimensión 1 (propósito primario) elige el arquetipo base:
@@ -44,10 +52,11 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - DADO un set de respuestas a las 5 dimensiones, CUANDO se envían al endpoint/tool, ENTONCES la respuesta aplica la lógica de decisión de arriba y devuelve: arquetipo, justificación con cita al benchmark, estructura de carpetas/frontmatter, y 3-5 skills iniciales — verificable comparando contra la tabla de la lógica de decisión.
 - DADO que el mismo input se envía dos veces, ENTONCES la recomendación es idéntica (determinístico, sin LLM en el core).
 - DADO un cliente MCP (Claude Code) y un cliente REST (GPT Action), ENTONCES ambos reciben una respuesta que valida contra el mismo JSON Schema de salida (ver sección Esquema de datos).
-- DADO un diagnóstico incompleto o con valores fuera de las opciones válidas, ENTONCES el sistema responde con un error estructurado (ver Estados de error), nunca con una recomendación parcial o inventada.
+- DADO un input incompleto o con valores fuera de las opciones válidas, ENTONCES el sistema responde con un error estructurado (ver Estados de error), nunca con una recomendación parcial o inventada.
+- DADO que se inspecciona la descripción del tool (MCP y OpenAPI), ENTONCES contiene explícitamente las instrucciones del "Contrato de interacción con el agente llamador" de arriba — verificable leyendo el texto de la descripción, no el comportamiento en runtime (que no es controlable al 100% desde este código).
 
 ## Esquema de datos
-**Entrada** (`POST /diagnose`):
+**Entrada** (`POST /plan`):
 ```json
 {
   "purpose": "execute_projects | produce_knowledge | agent_memory | study",
@@ -74,12 +83,12 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - Mismatch de schema entre cliente MCP y REST → validación compartida vía el mismo JSON Schema; falla = `400` en ambos por igual.
 
 ## Integraciones
-- v1 es standalone: no lee el vault real de Luigui ni ningún vault de terceros, solo recibe respuestas al diagnóstico.
+- v1 es standalone: no lee el vault real de Luigui ni de ningún otro usuario — solo recibe las 5 respuestas explícitas en la llamada.
 - Reutiliza el patrón arquitectónico de Rikra (FastAPI + MCP server, abstracción de canal) pero sin dependencias de código compartidas.
 - Fuera de esta iteración: un modo "audita mi vault existente" que sí lea archivos reales (ver Fuera de alcance).
 
 ## Alcance por iteración
-- **Iteración 1 (MVP, esta spec):** motor de reglas + `knowledge/benchmark.yaml` con las combinaciones de la Lógica de decisión + API REST/OpenAPI + MCP server + skills iniciales como markdown descriptivo.
+- **Iteración 1 (MVP, esta spec):** motor de reglas + `knowledge/benchmark.yaml` con las combinaciones de la Lógica de decisión + API REST/OpenAPI + MCP server + skills iniciales como markdown descriptivo + contrato de interacción explícito en las descripciones del tool.
 - **Iteración 2 (no incluida aquí):** skills iniciales como SKILL.md ejecutables, modo auditoría de vault existente, personalización de tono de salida vía LLM opcional.
 
 ## Fuera de alcance (v1)
@@ -87,7 +96,7 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - No es una app de toma de notas (no reemplaza Obsidian/Notion/Tana).
 - No incluye sync ni almacenamiento de las notas del usuario.
 - No genera contenido de las notas, solo estructura + skills.
-- No hay cuentas de usuario ni persistencia del diagnóstico en v1 (stateless por sesión).
+- No hay cuentas de usuario ni persistencia entre llamadas en v1 (stateless por sesión).
 - Los arquetipos de estudio (Cornell/Outline) no se implementan en v1, solo se mencionan como nota de recomendación textual.
 
 ## Stack / restricciones técnicas
@@ -95,20 +104,23 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - MCP server nativo (`/mcp`) + API REST documentada con OpenAPI 3.x (compatible con Custom GPT Actions)
 - Motor de recomendación: árbol de decisión determinístico sobre las dimensiones del benchmark — sin LLM en el core (transparencia + costo cero por request; alineado a Soberanía de Tokens, T1). LLM opcional solo para personalizar el *tono* del texto de salida, nunca la decisión.
 - Base de conocimiento: `knowledge/benchmark.yaml` versionado en el repo, resultado documentado de la fase de investigación (fuente de verdad, editable sin tocar código)
-- Deploy: Render (free tier, tarjeta solo para verificación de $1 reembolsado, sleep tras inactividad)
+- Deploy: Render (free tier, requiere tarjeta solo para verificación por $1 reembolsado, se duerme tras ~15 min de inactividad)
 - Licencia: MIT, repo público
 
 ## Métricas de éxito
-- % de sesiones que completan el diagnóstico completo
+- % de sesiones que completan las 5 respuestas (vía conversación con el agente, no vía input directo)
 - Cobertura del benchmark: nº de metodologías/herramientas documentadas y trazables por recomendación
 - Adopción: nº de invocaciones vía MCP vs. vía REST (valida si el acceso dual realmente se usa)
 
-## Copy del diagnóstico (lenguaje natural, mapea 1:1 a los enums del Esquema de datos)
+## Copy de las preguntas (lenguaje natural, mapea 1:1 a los enums del Esquema de datos — este es el texto que el agente llamador debe usar para preguntarle al usuario, ver "Contrato de interacción con el agente llamador")
 1. **¿Cuál es el objetivo principal de tu Segundo Cerebro?** → Ejecutar y dar seguimiento a proyectos activos (`execute_projects`) / Producir conocimiento propio: escribir, investigar (`produce_knowledge`) / Que un agente de IA opere sobre mis notas como memoria de trabajo (`agent_memory`) / Estudiar y retener contenido (`study`)
 2. **¿Cuánto tiempo quieres invertir manteniendo el sistema?** → Poco, quiero organización automática (`low`) / Algo, una revisión periódica está bien (`medium`) / Mucho, disfruto estructurar y conectar notas a mano (`high`)
 3. **¿Usas o planeas usar agentes de código (Claude Code, Cursor) sobre tus notas?** → Ya lo hago (`already_using`) / No todavía, pero quiero empezar (`want_to_start`) / No me interesa por ahora (`not_interested`)
 4. **¿Con qué frecuencia capturas información nueva?** → Esporádicamente (`sporadic`) / A diario, de una o dos fuentes (`daily_moderate`) / A diario, de muchas fuentes distintas (`high_multi_source`)
 5. **¿Qué tan cómodo estás trabajando con archivos markdown y git?** → Muy cómodo, prefiero texto plano (`markdown_git_comfortable`) / Prefiero una interfaz visual (`prefers_visual_ui`)
+
+## Historial de renombres
+- v1.0.x: el concepto se llamaba "diagnóstico" (`POST /diagnose`, tool `diagnose`, modelos `DiagnoseRequest`/`DiagnoseResponse`). Renombrado en v2.0.0 a `POST /plan` / tool `create_second_brain_plan` porque "diagnóstico" implica evaluar algo existente, y esta herramienta es para crear un Segundo Cerebro desde cero, no para auditar uno. Es un cambio breaking de la API pública.
 
 ## Preguntas abiertas
 - Ninguna bloqueante. Pendiente menor: verificar disponibilidad de "Second Brain Starter" como nombre de repo/dominio antes de publicar.
