@@ -343,3 +343,38 @@ skills_catalog:
       lleguen al Inbox (docs/SPEC.md, modificador de capture_volume).
     archetypes: [action_first, knowledge_first, agent_first, hybrid]
     priority: 0
+
+# --- Catálogo de propósito por carpeta (docs/SPEC.md, sección homónima) ----
+# Una entrada por nombre de carpeta, reutilizable entre arquetipos — no se
+# redacta distinto por arquetipo. Usado por app/engine/structure.py (T14)
+# para armar structure.folder_purposes en la respuesta.
+folder_purposes:
+  Projects/: >-
+    Proyectos activos con objetivo y fecha de cierre definidos — algo que
+    estás ejecutando ahora, no una idea suelta.
+  Areas/: >-
+    Responsabilidades continuas, sin fecha de cierre — cosas que sostenés
+    en el tiempo, no que "terminás".
+  Resources/: >-
+    Material de referencia por tema, sin acción asociada — para
+    consultar, no para ejecutar.
+  Archive/: >-
+    Todo lo que ya no está activo pero querés conservar — proyectos
+    cerrados, áreas que dejaste de sostener.
+  Inbox/: >-
+    Captura sin fricción — todo entra acá primero, sin clasificar, para
+    procesar después.
+  Notas-permanentes/: >-
+    Ideas ya procesadas y redactadas con tus propias palabras, una idea
+    por nota, listas para conectarse entre sí.
+  MOCs/: >-
+    Mapas de contenido — páginas hub que agrupan y dan contexto a un
+    grupo de notas permanentes sobre un mismo tema.
+  active/: >-
+    Lo que estás usando activamente ahora mismo — lo primero que un
+    agente de código debería leer.
+  reference/: >-
+    Información estable que consultás seguido pero no editás seguido.
+  archive/: >-
+    Lo que ya no es relevante pero se conserva con historial — no se
+    borra, se archiva.

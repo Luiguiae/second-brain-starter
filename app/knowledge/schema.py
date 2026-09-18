@@ -221,6 +221,15 @@ class Benchmark(BaseModel):
     dimensions: list[Dimension]
     decision_rules: DecisionRules
     skills_catalog: list[SkillCatalogEntry]
+    folder_purposes: dict[str, str] = Field(
+        description=(
+            "Catálogo de propósito por nombre de carpeta (docs/SPEC.md, "
+            "'Catálogo de propósito por carpeta'), reutilizable entre "
+            "arquetipos — no se redacta distinto por arquetipo. Fase 3 "
+            "(T14) lo usa para armar `structure.folder_purposes` en la "
+            "respuesta."
+        )
+    )
 
     @model_validator(mode="after")
     def _cross_references_resolve(self) -> Benchmark:
@@ -314,5 +323,23 @@ class Benchmark(BaseModel):
                     f"archetype '{arch_id}' debe tener entre 3 y 5 skills base "
                     f"(sin contar clasificador-de-fuentes), tiene {count}"
                 )
+
+        # Toda carpeta que pueda terminar en structure.folders — la de un
+        # arquetipo, o la que agrega el modificador de capture_volume — debe
+        # tener su entrada en folder_purposes, sin excepciones (docs/SPEC.md,
+        # criterios de aceptación). Si esto no vale acá, T14 no puede
+        # garantizarlo en runtime.
+        all_possible_folders: set[str] = set()
+        for archetype in self.archetypes:
+            all_possible_folders.update(archetype.folders)
+        for cv in self.decision_rules.capture_volume_modifiers:
+            all_possible_folders.update(cv.add_folders)
+
+        missing_purposes = all_possible_folders - set(self.folder_purposes)
+        if missing_purposes:
+            raise ValueError(
+                f"folder_purposes no cubre estas carpetas usadas en archetypes/"
+                f"capture_volume_modifiers: {sorted(missing_purposes)}"
+            )
 
         return self
