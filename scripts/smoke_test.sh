@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # T32 (docs/tasks.md, Fase 9): smoke test post-deploy.
 #
-# Contra la URL pública de un deploy real (Railway u otro), verifica:
+# Contra la URL pública de un deploy real (Koyeb u otro), verifica:
 #   1. GET /health responde 200.
 #   2. POST /diagnose con un caso feliz devuelve 200 y un archetype válido.
 #   3. POST /mcp responde al handshake `initialize` del protocolo MCP.
 #
 # Uso:
-#   ./scripts/smoke_test.sh https://tu-app.up.railway.app
+#   ./scripts/smoke_test.sh https://tu-app.koyeb.app
 # o:
-#   BASE_URL=https://tu-app.up.railway.app ./scripts/smoke_test.sh
+#   BASE_URL=https://tu-app.koyeb.app ./scripts/smoke_test.sh
 #
 # Requiere: curl, python3 (para parsear JSON sin depender de jq).
 
