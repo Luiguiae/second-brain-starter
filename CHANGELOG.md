@@ -13,12 +13,12 @@ Implementación completa de [docs/SPEC.md](docs/SPEC.md), Iteración 1, siguiend
 - **MCP server nativo** (`app/channels/mcp_server.py`), montado en `/mcp`: tool `diagnose` sobre el SDK oficial (`mcp==2.2.0`), mismo engine que REST.
 - **Paridad MCP/REST verificada por test**: mismo input → salida estructuralmente idéntica en ambos canales, en casos felices y en los 3 estados de error verificables a este nivel.
 - **`AGENTS.md`**: invariantes de arquitectura (motor sin LLM, engine único, determinismo, sin fallback silencioso).
-- **Deploy**: `Procfile` + `railway.json` para Railway, `scripts/smoke_test.sh` para verificar un deploy arriba.
+- **Deploy**: `Dockerfile` para Koyeb, `scripts/smoke_test.sh` para verificar un deploy arriba.
 - 403 tests, `ruff check .` limpio.
 
 ### Pendiente de verificación manual
 
-- El deploy real en Railway no se ejecutó desde este entorno (requiere una cuenta/proyecto Railway) — la configuración de arranque se verificó localmente con el comando exacto que usaría Railway (`uvicorn app.main:app --host 0.0.0.0 --port $PORT`).
+- El deploy real en Koyeb no se ejecutó desde este entorno (requiere una cuenta/proyecto Koyeb) — la configuración de arranque se verificó con un `docker build` + `docker run` real del `Dockerfile` del repo (mismo comando de arranque que usaría Koyeb: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`).
 
 ### Fuera de esta iteración (ver docs/SPEC.md, "Alcance por iteración" e "Iteración 2")
 
