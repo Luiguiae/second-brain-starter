@@ -95,7 +95,7 @@ Ninguno de los dos modificadores cambia el Esquema de datos de salida (`folders`
 - MCP server nativo (`/mcp`) + API REST documentada con OpenAPI 3.x (compatible con Custom GPT Actions)
 - Motor de recomendación: árbol de decisión determinístico sobre las dimensiones del benchmark — sin LLM en el core (transparencia + costo cero por request; alineado a Soberanía de Tokens, T1). LLM opcional solo para personalizar el *tono* del texto de salida, nunca la decisión.
 - Base de conocimiento: `knowledge/benchmark.yaml` versionado en el repo, resultado documentado de la fase de investigación (fuente de verdad, editable sin tocar código)
-- Deploy: Koyeb (opción gratuita, sin tarjeta, sin sleep por inactividad)
+- Deploy: Render (free tier, tarjeta solo para verificación de $1 reembolsado, sleep tras inactividad)
 - Licencia: MIT, repo público
 
 ## Métricas de éxito

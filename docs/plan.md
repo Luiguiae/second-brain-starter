@@ -10,7 +10,7 @@ Construir una herramienta open source (MIT, repo público) que:
 2. Aplica un **motor de reglas determinístico, sin LLM**, sobre una base de conocimiento versionada (`knowledge/benchmark.yaml`) para decidir un arquetipo de Segundo Cerebro (Acción-primero, Conocimiento-primero, Agente-primero o Híbrido).
 3. Devuelve arquetipo + justificación trazable al benchmark + estructura de carpetas/frontmatter + 3-5 skills iniciales.
 4. Expone esa misma lógica por **dos canales equivalentes**: MCP server nativo (`/mcp`) y API REST con OpenAPI 3.x (compatible con Custom GPT Actions) — mismo input, misma salida, mismo JSON Schema de validación.
-5. Se despliega en Koyeb.
+5. Se despliega en Render.
 
 El criterio de éxito técnico no es solo "que responda", sino que:
 - La decisión sea **100% reproducible** (mismo input → mismo output, siempre).
@@ -49,8 +49,8 @@ Tests dedicados que prueban, para el mismo conjunto de inputs, que ambos canales
 ### Fase 8 — Verificación del catálogo de skills
 Validación de que el motor selecciona entre 3 y 5 skills del catálogo de `knowledge/benchmark.yaml` para cada arquetipo, incluida la combinación del híbrido.
 
-### Fase 9 — Deploy en Koyeb
-Configuración de arranque (Dockerfile + variables de entorno) y smoke test post-deploy. Koyeb, no Railway: opción gratuita, sin tarjeta, sin sleep por inactividad (decisión de Luigui) — un Dockerfile explícito es más portable que depender del auto-detect de buildpacks de la plataforma.
+### Fase 9 — Deploy en Render
+Configuración de arranque (Dockerfile + variables de entorno) y smoke test post-deploy. Render, no Koyeb: Koyeb eliminó su plan gratuito al ser adquirida por Mistral AI (feb 2026), dejó de ser viable (decisión de Luigui) — segundo cambio de plataforma después de Railway → Koyeb. Render free tier: tarjeta solo para verificación de $1 reembolsado, sleep tras inactividad. El Dockerfile explícito de T31 no cambia con este swap — es precisamente la portabilidad que justificó no depender del auto-detect de buildpacks de una plataforma específica.
 
 ### Fase 10 — Documentación y cierre
 README de uso (quickstart REST + MCP), instrucciones de edición de `knowledge/benchmark.yaml` sin tocar código, y tag de versión inicial.
@@ -63,7 +63,7 @@ README de uso (quickstart REST + MCP), instrucciones de edición de `knowledge/b
 - **Pydantic v2**: modelos compartidos + generación de JSON Schema (Fase 2), base para validación compartida entre canales (spec: "Mismatch de schema... validación compartida vía el mismo JSON Schema").
 - **PyYAML** (o `ruamel.yaml` si se necesita preservar comentarios/orden al editar el benchmark) + una librería de validación de schema (`jsonschema` o el propio Pydantic) para `knowledge/benchmark.yaml`.
 - **pytest + httpx** (TestClient de FastAPI) para toda la capa de tests, incluida la paridad MCP/REST.
-- **Koyeb**: deploy (opción gratuita, sin tarjeta, sin sleep por inactividad); variables de entorno y comando de arranque a definir en Fase 9. La configuración de arranque debe ser portable (Dockerfile explícito, sin variables auto-inyectadas específicas de una plataforma) para no acoplar el proyecto a Koyeb más de lo necesario.
+- **Render**: deploy (free tier, tarjeta solo para verificación de $1 reembolsado, sleep tras inactividad); variables de entorno y comando de arranque a definir en Fase 9. La configuración de arranque debe ser portable (Dockerfile explícito, sin variables auto-inyectadas específicas de una plataforma) para no acoplar el proyecto a Render más de lo necesario — ya evitó retrabajo en el swap Railway → Koyeb → Render, el mismo Dockerfile sirvió para los tres.
 
 ### Riesgos
 1. **Duplicación de lógica entre MCP y REST.** Es el riesgo central del encargo (de ahí la Fase 7 explícita). Mitigación: Fases 3-6 obligan a que el engine sea un módulo único importado por ambos canales — ningún canal debe reimplementar la lógica de decisión ni el armado de la respuesta.

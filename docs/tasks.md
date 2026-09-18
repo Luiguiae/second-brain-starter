@@ -226,19 +226,19 @@
 
 ---
 
-## Fase 9 — Deploy en Koyeb
+## Fase 9 — Deploy en Render
 
-> Cambio de plataforma (decisión de Luigui): Koyeb en vez de Railway — opción gratuita, sin tarjeta, sin sleep por inactividad. Reemplaza `railway.json` (T31 ya ejecutado) por un `Dockerfile`: más portable que depender del auto-detect de buildpacks de Koyeb, y no ata el arranque a config específica de una plataforma. La configuración de red del canal MCP (`TransportSecuritySettings` en `app/main.py`) ya lee la URL pública de una variable de entorno genérica configurada a mano (`PUBLIC_BASE_URL`), no de algo auto-inyectado por Railway — no necesita cambios por este swap.
+> Segundo cambio de plataforma (decisión de Luigui): Render en vez de Koyeb — Koyeb eliminó su plan gratuito al ser adquirida por Mistral AI (feb 2026), dejó de ser viable. Historial: Railway → Koyeb → Render. El `Dockerfile` de T31 (ya construido y verificado con Docker real) **no cambia** — Render lo despliega directo, detectándolo automáticamente en la raíz del repo, sin reescribir nada de la imagen. La configuración de red del canal MCP (`TransportSecuritySettings` en `app/main.py`) sigue leyendo `PUBLIC_BASE_URL`, una variable de entorno genérica configurada a mano — no depende de nada auto-inyectado por ninguna plataforma, así que este segundo swap tampoco toca código.
 
-### T31 — Configuración de arranque para Koyeb (Dockerfile)
-- **Descripción:** Reemplazar `railway.json` por un `Dockerfile` (imagen Python 3.11, instala el proyecto vía `pyproject.toml`, expone el puerto, arranca `uvicorn app.main:app --host 0.0.0.0 --port $PORT`) — más portable que depender del auto-detect de buildpacks de Koyeb, y reutilizable en cualquier plataforma que hable Docker. Mantiene `PUBLIC_BASE_URL` (`.env.example`) como la única variable de entorno relevante para `servers` de OpenAPI y la allowlist de `TransportSecuritySettings` del canal MCP — configurada a mano en el dashboard de Koyeb, nunca asumida como auto-inyectada por la plataforma. Documentar en `README.md` el flujo de deploy: Koyeb dashboard → *Create Web Service* → conectar el repo de GitHub → seleccionar build por `Dockerfile` (alternativa: Koyeb CLI) → configurar `PUBLIC_BASE_URL` → health check en `/health`.
-- **Archivos:** `Dockerfile` (nuevo), `railway.json` (eliminado), `.env.example` (revisar que siga siendo genérico), `README.md` (sección de deploy).
-- **Criterio de done:** `docker build` + `docker run` local levanta la app y responde en `/health` y `/docs` con el mismo comando que usaría Koyeb; deploy manual en un servicio Koyeb de prueba levanta la app y responde en `/` o `/docs`; `app/main.py` no referencia ninguna variable de entorno auto-inyectada específica de una plataforma (Railway, Koyeb o cualquier otra) — solo `PUBLIC_BASE_URL`, configurada a mano.
+### T31 — Configuración de arranque para Render (Dockerfile, sin cambios)
+- **Descripción:** El `Dockerfile` existente no se modifica — Render lo detecta automáticamente en la raíz del repo y lo usa como build method sin selección manual de builder. Solo cambia el flujo documentado: Render dashboard → **New** → **Web Service** → conectar el repo de GitHub → Render detecta el `Dockerfile` automáticamente → configurar `PUBLIC_BASE_URL` con el dominio que Render asigna (`https://<app>.onrender.com`, o dominio custom) → health check en `/health`. Actualizar `README.md` con este flujo (reemplazando el de Koyeb).
+- **Archivos:** `Dockerfile` (sin cambios), `.env.example` (sin cambios, sigue siendo genérico), `README.md` (sección de deploy).
+- **Criterio de done:** `docker build` + `docker run` local levanta la app y responde en `/health` y `/docs` con el mismo comando que usaría Render (ya verificado con Docker real en la ejecución anterior de T31, sigue vigente sin cambios); deploy manual en un servicio Render de prueba levanta la app y responde en `/` o `/docs`; `app/main.py` sigue sin referenciar ninguna variable de entorno auto-inyectada específica de una plataforma — solo `PUBLIC_BASE_URL`, configurada a mano.
 
-### T32 — Smoke test post-deploy (contra Koyeb)
-- **Descripción:** Mismo smoke test de siempre — sin cambios de contenido, solo de destino: `GET /health`, `POST /diagnose` con un caso feliz, y una conexión de prueba (`initialize`) a `/mcp`. Se ejecuta contra la URL pública que asigna Koyeb (`https://<app>.koyeb.app` o el dominio custom configurado), no contra Railway.
-- **Archivos:** `scripts/smoke_test.sh` (sin cambios de lógica; revisar que los ejemplos de uso en sus comentarios y en `README.md` citen una URL de Koyeb, no de Railway).
-- **Criterio de done:** Los 3 checks pasan contra el deploy real en Koyeb.
+### T32 — Smoke test post-deploy (contra Render)
+- **Descripción:** Mismo smoke test de siempre — sin cambios de contenido ni de lógica, solo de destino: `GET /health`, `POST /diagnose` con un caso feliz, y una conexión de prueba (`initialize`) a `/mcp`. Se ejecuta contra la URL pública que asigna Render (`https://<app>.onrender.com` o el dominio custom configurado), no contra Koyeb. Tener en cuenta el sleep tras inactividad del free tier de Render: el primer request post-sleep puede tardar más (cold start) — no es una falla del smoke test si el primer intento tarda y uno posterior no.
+- **Archivos:** `scripts/smoke_test.sh` (sin cambios de lógica; revisar que los ejemplos de uso en sus comentarios y en `README.md` citen una URL de Render, no de Koyeb).
+- **Criterio de done:** Los 3 checks pasan contra el deploy real en Render.
 
 ---
 
