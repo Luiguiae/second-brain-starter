@@ -57,6 +57,11 @@ def test_every_combination_resolves_without_exception_and_matches_schema(
 
     assert 3 <= len(response.skills) <= 5
 
+    # docs/SPEC.md, criterios de aceptación: folder_purposes cubre cada
+    # carpeta de folders, sin excepciones, para cualquier arquetipo —
+    # incluido hybrid. Sin combinación parcial: exactamente el mismo set.
+    assert set(response.structure.folder_purposes) == set(response.structure.folders), combo
+
     _purpose, _maintenance, _agent_usage, capture_volume, _technical_profile = combo
 
     if capture_volume in ("daily_moderate", "high_multi_source"):

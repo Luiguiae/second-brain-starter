@@ -74,6 +74,19 @@ def test_technical_profile_modifiers_cover_both_values() -> None:
     assert set(prefers_visual_ui.system_ref_by_archetype) == set(ARCHETYPE_IDS)
 
 
+def test_folder_purposes_covers_every_folder_used_by_any_archetype_or_modifier() -> None:
+    benchmark = load_benchmark()
+
+    used_folders: set[str] = set()
+    for archetype in benchmark.archetypes:
+        used_folders.update(archetype.folders)
+    for cv in benchmark.decision_rules.capture_volume_modifiers:
+        used_folders.update(cv.add_folders)
+
+    assert used_folders  # sanity: hay al menos una carpeta usada
+    assert used_folders <= set(benchmark.folder_purposes)
+
+
 def test_missing_file_raises_explicit_error(tmp_path) -> None:
     missing_path = tmp_path / "does-not-exist.yaml"
     with pytest.raises(BenchmarkLoadError, match="no encontrado"):

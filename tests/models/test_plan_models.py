@@ -31,7 +31,13 @@ SPEC_REQUEST_EXAMPLE = {
 SPEC_RESPONSE_EXAMPLE = {
     "archetype": "hybrid",
     "justification": ["string (con referencia a la fuente del benchmark)"],
-    "structure": {"folders": ["string"], "frontmatter_fields": ["string"]},
+    "structure": {
+        "folders": ["string"],
+        "folder_purposes": {
+            "nombre_carpeta": "explicación humana de 1-2 frases: qué va acá y para qué sirve"
+        },
+        "frontmatter_fields": ["string"],
+    },
     "skills": [{"name": "string", "description": "string", "format": "markdown_descriptive"}],
 }
 
@@ -46,7 +52,13 @@ def test_request_example_from_spec_validates() -> None:
 def test_response_example_from_spec_validates() -> None:
     response = CreateSecondBrainPlanResponse.model_validate(SPEC_RESPONSE_EXAMPLE)
     assert response.archetype == "hybrid"
-    assert response.structure == Structure(folders=["string"], frontmatter_fields=["string"])
+    assert response.structure == Structure(
+        folders=["string"],
+        folder_purposes={
+            "nombre_carpeta": "explicación humana de 1-2 frases: qué va acá y para qué sirve"
+        },
+        frontmatter_fields=["string"],
+    )
     assert response.skills == [
         SkillOutput(name="string", description="string", format="markdown_descriptive")
     ]
