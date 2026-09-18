@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.1.0 — `structure.folder_purposes` (minor, aditivo)
+
+Cambio aditivo sobre v2.0.0: agrega un campo nuevo al output, ninguna forma existente cambia ni se elimina. La lógica de decisión de arquetipos, los modificadores existentes (híbrido, LYT, `capture_volume`, `technical_profile`), y el resto del "Contrato de interacción con el agente llamador" no cambiaron.
+
+### Agregado
+
+- **`knowledge/benchmark.yaml`**: catálogo de propósito por carpeta (`folder_purposes`, 10 entradas) — una entrada reutilizable por nombre de carpeta, no una redacción distinta por arquetipo (docs/SPEC.md, "Catálogo de propósito por carpeta"). `app/knowledge/schema.py` valida al cargar que toda carpeta usada por cualquier arquetipo o por el modificador de `capture_volume` tiene su entrada — sin excepciones.
+- **`structure.folder_purposes`** en la respuesta (REST y MCP): `dict[str, str]` con el propósito de cada carpeta de `structure.folders`, en 1-2 frases. Armado en `app/engine/structure.py` (T14) a partir del catálogo — cubre exactamente el mismo set de carpetas que `structure.folders`, para los 4 arquetipos (y el híbrido), verificado sobre las 216 combinaciones.
+- **Modelo de dominio**: `Structure.folder_purposes` (`app/models/plan.py`), reflejado automáticamente en el JSON Schema exportado (T10) y en el OpenAPI/MCP tool schema — un solo lugar define la forma, ambos canales la heredan.
+- **`TOOL_DESCRIPTION`** (`app/channels/__init__.py`, compartida entre REST y MCP): nueva instrucción 4 del "Contrato de interacción con el agente llamador" — al crear los archivos reales de la estructura, usar `structure.folder_purposes` para escribir el README.md de cada carpeta en lenguaje humano y para explicarle a la persona el propósito de cada una en el resumen, no solo listarlas por nombre.
+
+### Verificado
+
+- Suite completa (408 tests) y `ruff check .` en verde.
+- Paridad MCP/REST: los tests existentes de T28/T29 ya comparan el body completo por igualdad estructural, así que cubren `folder_purposes` sin necesitar tests nuevos de paridad — confirmado que ambos canales devuelven el mismo shape.
+- Probado en vivo contra un servidor local real: `POST /plan` devuelve `structure.folder_purposes` con las claves exactas de `structure.folders`.
+
 ## v2.0.0 — Renombrado breaking: diagnose → plan
 
 **Breaking change de la API pública.** Motivo (docs/SPEC.md, "Historial de renombres"): "diagnóstico" implica evaluar algo existente, y esta herramienta es para crear un Segundo Cerebro desde cero, no para auditar uno que ya existe. El encuadre equivocado podía llevar al agente llamador a explorar el sistema de archivos del usuario buscando "algo que diagnosticar" — exactamente lo que esta tool nunca hace (todo el input viaja explícito en la llamada). La lógica de decisión, el motor de reglas y `knowledge/benchmark.yaml` **no cambiaron de comportamiento** — solo de nombre.
